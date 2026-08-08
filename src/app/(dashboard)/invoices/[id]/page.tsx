@@ -15,7 +15,7 @@ import {
 import { useInvoice, useInvoiceItems } from '@/hooks/use-data'
 import { formatCurrency, numberToWords } from '@/lib/utils'
 
-const SITE_URL = typeof window !== 'undefined' ? window.location.origin : ''
+const PUBLIC_URL = 'https://safwanoptical-view.vercel.app'
 
 export default function InvoiceViewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -42,7 +42,7 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
   const date = new Date(inv.created_at).toLocaleDateString('en-SA', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
-  const qrUrl = `${SITE_URL}/invoices/${id}`
+  const qrUrl = `${PUBLIC_URL}/view.html?id=${id}`
 
   // ─── Thermal 80mm Print ───
   const handlePrint = () => {
@@ -164,8 +164,8 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
 
     pdfWin.document.write(`<!DOCTYPE html><html><head><title>PDF Export</title><style>
       @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
-      body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
-      #pdf-content { width: 210mm; padding: 15mm; margin: 0 auto; background: white; color: #000; font-size: 10pt; }
+      body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #fff; }
+      #pdf-content { width: 210mm; max-width: 210mm; padding: 10mm; margin: 0 auto; background: white; color: #000; font-size: 10pt; box-sizing: border-box; }
       .hdr { text-align: center; margin-bottom: 8mm; border-bottom: 2px solid #1a1a2e; padding-bottom: 5mm; }
       .hdr h1 { margin: 0; font-size: 18pt; font-weight: bold; color: #1a1a2e; }
       .hdr .address { font-size: 9pt; color: #555; margin: 2mm 0; }
@@ -272,13 +272,13 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
         setTimeout(function() {
           new QRCode(document.getElementById('pdf-qr'), {
             text: '${qrUrl}',
-            width: 100, height: 100,
+            width: 150, height: 150,
             colorDark: '#000', colorLight: '#fff',
-            correctLevel: QRCode.CorrectLevel.H
+            correctLevel: QRCode.CorrectLevel.M
           });
           setTimeout(function() {
             html2pdf().set({
-              margin: 0,
+              margin: 10,
               filename: 'Invoice_${inv.invoice_number}.pdf',
               image: { type: 'jpeg', quality: 0.98 },
               html2canvas: { scale: 3, useCORS: true, letterRendering: true },
@@ -303,7 +303,7 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
       @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
       @page { size: A4; margin: 10mm; }
       body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #fff; }
-      .pdf-content { width: 190mm; padding: 10mm; margin: 0 auto; background: white; color: #000; font-size: 10pt; }
+      .pdf-content { width: 210mm; max-width: 210mm; padding: 10mm; margin: 0 auto; background: white; color: #000; font-size: 10pt; box-sizing: border-box; }
       .hdr { text-align: center; margin-bottom: 8mm; border-bottom: 2px solid #1a1a2e; padding-bottom: 5mm; }
       .hdr h1 { margin: 0; font-size: 18pt; font-weight: bold; color: #1a1a2e; }
       .hdr .address { font-size: 9pt; color: #555; margin: 2mm 0; }
@@ -345,7 +345,7 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
       <table class="summary"><tr><td><b>Subtotal:</b></td><td style="text-align:right">${formatCurrency(inv.subtotal)}</td></tr>${Number(inv.discount) > 0 ? `<tr><td><b>Discount:</b></td><td style="text-align:right">-${formatCurrency(inv.discount)}</td></tr>` : ''}<tr><td><b>Paid:</b></td><td style="text-align:right;color:#2563eb">${formatCurrency(inv.amount_paid || 0)}</td></tr>${Number(inv.balance_due) > 0 ? `<tr><td><b>Balance Due:</b></td><td style="text-align:right;color:#dc2626">${formatCurrency(inv.balance_due)}</td></tr>` : ''}<tr class="total-row"><td style="padding:6px"><b>TOTAL:</b></td><td style="text-align:right;font-size:12pt">${formatCurrency(inv.total_amount)}</td></tr></table>
       <div class="words">Amount in words: ${numberToWords(Math.floor(inv.total_amount))} Saudi Riyals</div>
       <div class="qr-footer"><div id="print-a4-qr"></div><div class="thanks"><p style="font-weight:bold">Thank you for shopping with us!</p><p style="font-weight:bold;direction:rtl">شكراً لتسوقك معنا!</p></div></div>
-      <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script>setTimeout(function(){new QRCode(document.getElementById('print-a4-qr'),{text:'${qrUrl}',width:100,height:100,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});setTimeout(function(){window.print();setTimeout(function(){window.close();},500);},400);},200);</script>
+      <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script>setTimeout(function(){new QRCode(document.getElementById('print-a4-qr'),{text:'${qrUrl}',width:150,height:150,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});setTimeout(function(){window.print();setTimeout(function(){window.close();},500);},400);},200);</script>
     </div></body></html>`)
     win.document.close()
   }

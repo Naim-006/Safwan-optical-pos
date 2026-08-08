@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invoice Viewer — Safwan Opticals</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Loading -->
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading invoice...</p>
+    </div>
+
+    <!-- Error -->
+    <div id="error-container" class="error" style="display:none">
+      <div class="error-icon">&#x26A0;</div>
+      <h2>Invoice Not Found</h2>
+      <p id="error-msg">The invoice you're looking for could not be found.</p>
+      <a href="index.html" class="back-btn">Back to Home</a>
+    </div>
+
+    <!-- Invoice Content -->
+    <div id="invoice-container" style="display:none"></div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search)
+    const id = params.get('id')
+    if (id) loadInvoice(id)
+    else showError('No invoice ID provided')
+  </script>
+</body>
+</html>

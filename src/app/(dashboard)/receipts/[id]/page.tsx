@@ -13,7 +13,7 @@ import { useInvoice, useInvoiceItems } from '@/hooks/use-data'
 import { formatCurrency, numberToWords } from '@/lib/utils'
 import { useLang } from '@/contexts/lang-provider'
 
-const SITE_URL = typeof window !== 'undefined' ? window.location.origin : ''
+const PUBLIC_URL = 'https://safwanoptical-view.vercel.app'
 
 export default function ReceiptViewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -41,7 +41,7 @@ export default function ReceiptViewPage({ params }: { params: Promise<{ id: stri
   const date = new Date(rec.created_at).toLocaleDateString('en-SA', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
-  const qrUrl = `${SITE_URL}/invoices/${id}`
+  const qrUrl = `${PUBLIC_URL}/view.html?id=${id}`
 
   // ─── Thermal 80mm Print ───
   const handlePrint = () => {
@@ -137,8 +137,8 @@ export default function ReceiptViewPage({ params }: { params: Promise<{ id: stri
     if (!pdfWin) return
 
     pdfWin.document.write(`<!DOCTYPE html><html><head><title>PDF</title><style>
-      body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #eee; }
-      #pdf-content { width: 210mm; padding: 12mm; margin: 0 auto; background: white; color: #000; font-size: 11pt; }
+      body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #fff; }
+      #pdf-content { width: 210mm; max-width: 210mm; padding: 10mm; margin: 0 auto; background: white; color: #000; font-size: 11pt; box-sizing: border-box; }
       .cols { display: flex; gap: 3mm; margin-bottom: 5mm; }
       .left-col { flex: 1; }
       .right-col { width: 80mm; }
@@ -225,7 +225,7 @@ export default function ReceiptViewPage({ params }: { params: Promise<{ id: stri
           });
           setTimeout(function() {
             html2pdf().set({
-              margin: 0, filename: 'Receipt_${rec.invoice_number}.pdf',
+              margin: 10, filename: 'Receipt_${rec.invoice_number}.pdf',
               image: { type: 'jpeg', quality: 0.98 },
               html2canvas: { scale: 3, useCORS: true },
               jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -248,7 +248,7 @@ export default function ReceiptViewPage({ params }: { params: Promise<{ id: stri
     win.document.write(`<!DOCTYPE html><html><head><title>Print A4</title><style>
       @page { size: A4; margin: 10mm; }
       body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #fff; color: #000; font-size: 11pt; }
-      .pdf-content { width: 190mm; padding: 10mm; margin: 0 auto; background: white; }
+      .pdf-content { width: 210mm; max-width: 210mm; padding: 10mm; margin: 0 auto; background: white; box-sizing: border-box; }
       .cols { display: flex; gap: 3mm; margin-bottom: 5mm; }
       .left-col { flex: 1; } .right-col { width: 80mm; }
       .hdr { margin-bottom: 8mm; border-bottom: 2px solid #1a1a2e; padding-bottom: 4mm; }
@@ -303,7 +303,7 @@ export default function ReceiptViewPage({ params }: { params: Promise<{ id: stri
       <div class="footer"><div>Kingdom of Saudi Arabia - Jeddah 23436 | 310158981300003 | Tel: +966 05 0918 3807</div></div>
       <div id="print-a4-rec-qr" style="text-align:center;margin-top:8mm"></div>
       <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-      <script>setTimeout(function(){new QRCode(document.getElementById('print-a4-rec-qr'),{text:'${qrUrl}',width:100,height:100,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});setTimeout(function(){window.print();setTimeout(function(){window.close();},500);},400);},200);</script>
+      <script>setTimeout(function(){new QRCode(document.getElementById('print-a4-rec-qr'),{text:'${qrUrl}',width:150,height:150,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});setTimeout(function(){window.print();setTimeout(function(){window.close();},500);},400);},200);</script>
     </div></body></html>`)
     win.document.close()
   }

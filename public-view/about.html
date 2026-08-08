@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — Safwan Opticals</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    :root { --primary: #0f172a; --accent: #2563eb; --bg: #f8fafc; --card-bg: #fff; --border: #e2e8f0; --text: #1e293b; --muted: #64748b; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+    .nav { background: #fff; border-bottom: 1px solid var(--border); padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+    .nav .brand { font-weight: 800; font-size: 1.1rem; color: var(--primary); text-decoration: none; }
+    .nav .brand span { color: var(--accent); }
+    .nav-links { display: flex; gap: 1.5rem; align-items: center; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-size: 0.85rem; font-weight: 500; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--accent); font-weight: 600; }
+    .lang-toggle { background: var(--accent); color: #fff; border: none; padding: 0.35rem 0.85rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+    .lang-toggle:hover { opacity: 0.9; }
+
+    .container { max-width: 800px; margin: 0 auto; padding: 3rem 1.5rem; }
+    .page-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .page-title span { color: var(--accent); }
+    .page-subtitle { color: var(--muted); margin-bottom: 2rem; font-size: 0.95rem; }
+
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
+    .card h3 { font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--primary); padding-bottom: 0.5rem; border-bottom: 2px solid var(--accent); }
+    .info-row { display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+    .info-row:last-child { border: none; }
+    .info-row .l { font-weight: 600; color: var(--muted); min-width: 140px; }
+    .info-row .v { text-align: right; font-weight: 500; }
+    .info-row .v.copy { color: var(--accent); font-family: monospace; }
+
+    .badge { display: inline-block; background: #dcfce7; color: #166534; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+    .badge.warning { background: #fef3c7; color: #92400e; }
+
+    .certification { display: flex; align-items: center; gap: 1.5rem; background: #f0f9ff; border: 1px solid #bae6fd; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; }
+    .cert-icon { font-size: 2.5rem; }
+    .cert-text h4 { font-weight: 700; color: #0369a1; margin-bottom: 0.25rem; }
+    .cert-text p { font-size: 0.85rem; color: var(--muted); }
+
+    .map-link { color: var(--accent); text-decoration: none; font-weight: 600; }
+    .map-link:hover { text-decoration: underline; }
+
+    .footer { text-align: center; padding: 2rem 1.5rem; font-size: 0.75rem; color: var(--muted); border-top: 1px solid var(--border); }
+    .arabic { direction: rtl; text-align: right; }
+
+    @media (max-width: 500px) {
+      .container { padding: 2rem 1rem; }
+      .card { padding: 1.25rem; }
+      .info-row { flex-direction: column; gap: 0.25rem; }
+      .info-row .v { text-align: left; }
+      .nav { padding: 0.5rem 1rem; }
+      .nav-links { gap: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="/" class="brand"><span>Safwan</span> Opticals</a>
+    <div class="nav-links">
+      <a href="index.html" data-en="Home" data-ar="الرئيسية">Home</a>
+      <a href="about.html" class="active" data-en="About" data-ar="عن المتجر">About</a>
+      <button class="lang-toggle" onclick="toggleLang()">AR</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1 class="page-title"><span>Safwan</span> <span data-en="Opticals" data-ar="للبصريات">Opticals</span></h1>
+    <p class="page-subtitle" data-en="Your trusted optical shop in Jeddah — authenticity, quality, and professional eye care" data-ar="متجر البصريات الموثوق في جدة — الأصالة والجودة والعناية المهنية بالعيون">Your trusted optical shop in Jeddah — authenticity, quality, and professional eye care</p>
+
+    <div class="certification">
+      <div class="cert-icon">&#128205;</div>
+      <div class="cert-text">
+        <h4 data-en="Verified Business" data-ar="نشاط تجاري موثق">Verified Business</h4>
+        <p data-en="This is the official digital verification portal for Safwan Opticals. All QR codes on invoices link here." data-ar="هذه هي بوابة التحقق الرقمي الرسمية لصفوان للبصريات. جميع رموز QR على الفواتير ترتبط هنا.">Official digital verification portal. All QR codes on invoices link here for authenticity verification.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 data-en="Business Information" data-ar="معلومات تجارية">Business Information</h3>
+      <div class="info-row"><span class="l" data-en="Legal Name" data-ar="الاسم القانوني">Legal Name</span><span class="v">Safwan Opticals Trading Est.</span></div>
+      <div class="info-row"><span class="l" data-en="Trade Name (EN)" data-ar="الاسم التجاري (EN)">Trade Name (EN)</span><span class="v">Safwan Opticals</span></div>
+      <div class="info-row"><span class="l" data-en="Trade Name (AR)" data-ar="الاسم التجاري (AR)">Trade Name (AR)</span><span class="v">&#1589;&#1601;&#1608;&#1575;&#1606; &#1604;&#1604;&#1576;&#1589;&#1585;&#1610;&#1575;&#1578;</span></div>
+      <div class="info-row"><span class="l" data-en="Commercial Registration" data-ar="السجل التجاري">Commercial Registration</span><span class="v">4030411000</span></div>
+      <div class="info-row"><span class="l">VAT Number</span><span class="v">300833099900003</span></div>
+      <div class="info-row"><span class="l" data-en="Category" data-ar="التصنيف">Category</span><span class="v" data-en="Optical Retail & Eyewear" data-ar="تجارة التجزئة للبصريات والنظارات">Optical Retail & Eyewear</span></div>
+      <div class="info-row"><span class="l" data-en="Established" data-ar="تأسست">Established</span><span class="v">2021</span></div>
+    </div>
+
+    <div class="card">
+      <h3 data-en="Location & Contact" data-ar="الموقع والتواصل">Location & Contact</h3>
+      <div class="info-row"><span class="l" data-en="Address" data-ar="العنوان">Address</span><span class="v">Abdur Rahman Ibn Ahmed As Sidayri, As Salamah, Jeddah 23436, Saudi Arabia</span></div>
+      <div class="info-row"><span class="l" data-en="City" data-ar="المدينة">City</span><span class="v">Jeddah</span></div>
+      <div class="info-row"><span class="l" data-en="Phone" data-ar="الهاتف">Phone</span><span class="v copy">+966 05 0918 3807</span></div>
+      <div class="info-row"><span class="l" data-en="Email" data-ar="البريد الإلكتروني">Email</span><span class="v copy">support@safwanopticals.com</span></div>
+      <div class="info-row"><span class="l" data-en="Website" data-ar="الموقع">Website</span><span class="v copy">safwanoptical-view.vercel.app</span></div>
+      <div class="info-row"><span class="l" data-en="Google Maps" data-ar="خرائط قوقل">Google Maps</span><span class="v"><a href="https://maps.google.com/?q=Abdur+Rahman+Ibn+Ahmed+As+Sidayri,+As+Salamah,+Jeddah" target="_blank" class="map-link" data-en="View on Map" data-ar="عرض على الخريطة">View on Map</a></span></div>
+    </div>
+
+    <div class="card">
+      <h3 data-en="QR Code Verification" data-ar="التحقق من رمز QR">QR Code Verification</h3>
+      <p style="font-size:0.9rem;color:var(--muted);margin-bottom:1rem" data-en="Every invoice issued by Safwan Opticals contains a unique QR code. When scanned, it opens the invoice verification page showing:" data-ar="كل فاتورة صادرة عن صفوان للبصريات تحتوي على رمز QR فريد. عند المسح، يفتح صفحة التحقق من الفاتورة وتعرض:">Every invoice contains a unique QR code. When scanned, it shows:</p>
+      <div class="info-row"><span class="l" data-en="Invoice Number" data-ar="رقم الفاتورة">Invoice Number</span><span class="badge">&#10003;</span></div>
+      <div class="info-row"><span class="l" data-en="Customer Name" data-ar="اسم العميل">Customer Name</span><span class="badge">&#10003;</span></div>
+      <div class="info-row"><span class="l" data-en="Payment Status" data-ar="حالة الدفع">Payment Status</span><span class="badge">&#10003;</span></div>
+      <div class="info-row"><span class="l" data-en="Optical Prescription" data-ar="الوصفة البصرية">Optical Prescription</span><span class="badge">&#10003;</span></div>
+      <div class="info-row"><span class="l" data-en="Item Details" data-ar="تفاصيل العناصر">Item Details</span><span class="badge">&#10003;</span></div>
+      <div class="info-row"><span class="l" data-en="Total Amount" data-ar="المبلغ الإجمالي">Total Amount</span><span class="badge">&#10003;</span></div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>&copy; 2026 Safwan Opticals. All rights reserved.</p>
+    <p class="arabic">جميع الحقوق محفوظة &copy; 2026 صفوان للبصريات</p>
+  </footer>
+
+  <script>
+    let lang = 'en'
+    function toggleLang() {
+      lang = lang === 'en' ? 'ar' : 'en'
+      document.querySelector('.lang-toggle').textContent = lang === 'en' ? 'AR' : 'EN'
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
+      document.documentElement.lang = lang
+      document.querySelectorAll('[data-en]').forEach(el => { el.textContent = el.getAttribute('data-' + lang) })
+    }
+  </script>
+</body>
+</html>

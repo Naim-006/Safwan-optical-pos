@@ -267,10 +267,11 @@ export default function PosPage() {
         })),
       }
 
-      await createInvoiceMutation.mutateAsync(invoicePayload)
+      const result = await createInvoiceMutation.mutateAsync(invoicePayload)
+      const invoiceId = (result as any)?.id || ''
 
       // Print thermal receipt
-      printReceipt(invoiceNumber)
+      printReceipt(invoiceNumber, invoiceId)
 
       toast.success(customerName ? `Sale completed for ${customerName}` : 'Sale completed!')
       clearCart()
@@ -285,11 +286,12 @@ export default function PosPage() {
   }
 
   // ─── Thermal receipt print ───
-  const printReceipt = (invoiceNumber: string) => {
+  const printReceipt = (invoiceNumber: string, invoiceId: string) => {
     const win = window.open('', '', 'width=300,height=600')
     if (!win) return
 
     const date = new Date().toLocaleString()
+    const qrUrl = `https://safwanoptical-view.vercel.app/view.html?id=${invoiceId}`
     const rxText = prescription.right_sphere !== '' || prescription.left_sphere !== ''
       ? `R: ${prescription.right_sphere || 0}/${prescription.right_cylinder || 0}x${prescription.right_axis || 0} ADD ${prescription.right_add || 0}<br>
       L: ${prescription.left_sphere || 0}/${prescription.left_cylinder || 0}x${prescription.left_axis || 0} ADD ${prescription.left_add || 0}<br>
@@ -400,7 +402,7 @@ export default function PosPage() {
       <script>
         setTimeout(function() {
           new QRCode(document.getElementById('pos-qr'), {
-            text: '${invoiceNumber}',
+            text: '${qrUrl}',
             width: 100, height: 100,
             colorDark: '#000', colorLight: '#fff',
             correctLevel: QRCode.CorrectLevel.M

@@ -19,7 +19,7 @@ import { formatCurrency, generateInvoiceNumber, numberToWords } from '@/lib/util
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/contexts/lang-provider'
 
-const SITE_URL = typeof window !== 'undefined' ? window.location.origin : ''
+const PUBLIC_URL = 'https://safwanoptical-view.vercel.app'
 
 export default function NewReceiptPage() {
   const router = useRouter()
@@ -202,10 +202,10 @@ export default function NewReceiptPage() {
       <script>
         setTimeout(function() {
           new QRCode(document.getElementById('rec-qr'), {
-            text: '${SITE_URL}/invoices?q=${invNum}',
-            width: 100, height: 100,
+            text: '${PUBLIC_URL}/view.html?q=${invNum}',
+            width: 150, height: 150,
             colorDark: '#000', colorLight: '#fff',
-            correctLevel: QRCode.CorrectLevel.H
+            correctLevel: QRCode.CorrectLevel.M
           });
           setTimeout(function() { window.print(); setTimeout(function() { window.close(); }, 500); }, 300);
         }, 200);
