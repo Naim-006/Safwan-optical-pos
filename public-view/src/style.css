@@ -93,6 +93,16 @@ body { font-family:'Inter','Segoe UI',system-ui,sans-serif; background:var(--bg)
 .error-msg p { color:var(--muted); margin-bottom:1.25rem; }
 .btn { display:inline-block; background:var(--accent); color:#fff; padding:0.55rem 1.25rem; border-radius:6px; text-decoration:none; font-weight:600; font-size:0.85rem; }
 
+/* Bilingual labels */
+.lbl .en, .type .en, .rxr b.en, .tr span .en, .ftr .en, .badge .en, h4 .en { display:inline; }
+.lbl .ar, .type .ar, .rxr b.ar, .tr span .ar, .ftr .ar, .badge .ar, h4 .ar { direction:rtl; color:var(--muted); font-size:0.85em; margin-left:6px; display:inline; }
+.lbl .ar::before { content:' / '; }
+.type .ar::before { content:' — '; }
+h4 .ar::before { content:' | '; }
+.tr span .ar::before { content:' / '; }
+.name-ar { text-align:center; font-size:0.9rem; font-weight:600; color:var(--muted); margin-top:2px; direction:rtl; }
+.addr-ar { text-align:center; font-size:0.75rem; color:var(--muted); margin-top:2px; direction:rtl; }
+
 @media (max-width:500px) {
   .nav { padding:0 1rem; }
   .nav-links { gap:1rem; }
