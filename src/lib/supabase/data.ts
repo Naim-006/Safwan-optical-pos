@@ -215,3 +215,25 @@ export async function fetchSalesReport(startDate: string, endDate: string) {
     unpaidAmount: totalSales - paidAmount,
   }
 }
+
+// Generate sequential invoice/receipt number
+export async function generateNextNumber(prefix: 'IN' | 'RE'): Promise<string> {
+  const sb = getSupabase()
+  if (!sb) return `${prefix}-${Date.now().toString().slice(-6)}`
+
+  const col = 'invoice_number'
+  const likePattern = `SA-${prefix}-%`
+
+  const { count, error } = await sb
+    .from('invoices')
+    .select('*', { count: 'exact', head: true })
+    .like(col, likePattern)
+
+  if (error) {
+    const fallback = Date.now().toString().slice(-6)
+    return `SA-${prefix}-${fallback}`
+  }
+
+  const next = (count || 0) + 1
+  return `SA-${prefix}-${String(next).padStart(4, '0')}`
+}

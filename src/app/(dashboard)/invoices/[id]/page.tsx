@@ -16,6 +16,7 @@ import { useInvoice, useInvoiceItems } from '@/hooks/use-data'
 import { formatCurrency, numberToWords } from '@/lib/utils'
 
 const PUBLIC_URL = 'https://safwanoptical-view.vercel.app'
+const SITE_URL = PUBLIC_URL
 
 export default function InvoiceViewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)

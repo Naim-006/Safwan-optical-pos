@@ -15,7 +15,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { useSearchCustomers, useCreateInvoice } from '@/hooks/use-data'
-import { formatCurrency, generateInvoiceNumber, numberToWords } from '@/lib/utils'
+import { formatCurrency, numberToWords } from '@/lib/utils'
+import { generateNextNumber } from '@/lib/supabase/data'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/contexts/lang-provider'
 
@@ -84,7 +85,7 @@ export default function NewReceiptPage() {
     }
 
     const totalAmount = Number(amount)
-    const invoiceNumber = generateInvoiceNumber('REC')
+    const invoiceNumber = await generateNextNumber('RE')
 
     try {
       await createInvoiceMutation.mutateAsync({
@@ -202,7 +203,7 @@ export default function NewReceiptPage() {
       <script>
         setTimeout(function() {
           new QRCode(document.getElementById('rec-qr'), {
-            text: '${PUBLIC_URL}/view.html?q=${invNum}',
+            text: '${PUBLIC_URL}/view.html?id=${invNum}',
             width: 150, height: 150,
             colorDark: '#000', colorLight: '#fff',
             correctLevel: QRCode.CorrectLevel.M

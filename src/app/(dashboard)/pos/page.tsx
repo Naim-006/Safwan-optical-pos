@@ -23,8 +23,9 @@ import {
   useProducts, useSearchProducts, useCreateInvoice,
   useSearchCustomers, useCreateCustomer, useUpdateCustomer,
 } from '@/hooks/use-data'
-import { formatCurrency, generateInvoiceNumber, numberToWords } from '@/lib/utils'
+import { formatCurrency, numberToWords } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { generateNextNumber } from '@/lib/supabase/data'
 import { useLang } from '@/contexts/lang-provider'
 
 export default function PosPage() {
@@ -238,7 +239,7 @@ export default function PosPage() {
         }
       }
 
-      const invoiceNumber = generateInvoiceNumber('ROM')
+      const invoiceNumber = await generateNextNumber('IN')
 
       const invoicePayload = {
         invoice: {

@@ -24,8 +24,9 @@ import {
   useSearchCustomers, useCreateInvoice, useProducts,
   useCreateCustomer, useUpdateCustomer,
 } from '@/hooks/use-data'
-import { formatCurrency, generateInvoiceNumber } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { generateNextNumber } from '@/lib/supabase/data'
 import { useLang } from '@/contexts/lang-provider'
 
 const EYE_TYPES = ['Single Vision', 'Bifocal', 'Progressive', 'Office Lens', 'Other']
@@ -219,7 +220,7 @@ export default function NewInvoicePage() {
 
       await createInvoiceMutation.mutateAsync({
         invoice: {
-          invoice_number: generateInvoiceNumber('ROM'),
+          invoice_number: await generateNextNumber('IN'),
           customer_name: customerName || null,
           customer_phone: data.customerPhone || null,
           customer_id: finalCustomerId || null,
