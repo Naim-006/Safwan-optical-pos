@@ -75,7 +75,7 @@ export default function ReceiptViewPage({ params }: { params: Promise<{ id: stri
         <div>Abdul Rahman Ibn Ahmad As Sidayri, As Salamah, Jeddah 23436</div>
         <div class="ar">صفوان للبصريات - عبد الرحمن بن أحمد السديري، السلامة، جدة</div>
       </div>
-      <div style="text-align:center;font-size:10px">VAT NO: 300833099900003</div>
+      <div style="text-align:center;font-size:10px">VAT NO: 310158981300003</div>
       <div class="divider"></div>
       <div class="title">Receipt Voucher / سند قبض</div>
       <table class="info-table">
@@ -113,7 +113,7 @@ export default function ReceiptViewPage({ params }: { params: Promise<{ id: stri
         <div class="sig-box"><div class="sig-line"></div><div>Signature / التوقيع</div></div>
       </div>
       <div class="footer">
-        <div>Kingdom of Saudi Arabia - Jeddah 23436 | 300833099900003</div>
+        <div>Kingdom of Saudi Arabia - Jeddah 23436 | 310158981300003</div>
         <div>Tel: +966 05 0918 3807</div>
       </div>
       <div class="qr" id="rec-qr-view"></div>
@@ -163,7 +163,7 @@ export default function ReceiptViewPage({ params }: { params: Promise<{ id: stri
           <div class="left-col">
             <div class="en">Safwan OPTICALS</div>
             <div style="font-size:9pt;color:#555">Abdul Rahman Ibn Ahmad As Sidayri, As Salamah, Jeddah 23436</div>
-            <div style="font-size:9pt">Phone: +966 05 0918 3807 | VAT: 300833099900003</div>
+            <div style="font-size:9pt">Phone: +966 05 0918 3807 | VAT: 310158981300003</div>
           </div>
           <div class="right-col" style="text-align:right">
             <div class="ar" style="font-size:12pt;font-weight:bold">صفوان للبصريات</div>
@@ -211,7 +211,7 @@ export default function ReceiptViewPage({ params }: { params: Promise<{ id: stri
       </div>
 
       <div class="footer">
-        <div>Kingdom of Saudi Arabia - Jeddah 23436 | 300833099900003 | Tel: +966 05 0918 3807</div>
+        <div>Kingdom of Saudi Arabia - Jeddah 23436 | 310158981300003 | Tel: +966 05 0918 3807</div>
       </div>
       <div class="qr-ft" id="pdf-receipt-qr"></div>
 
@@ -271,7 +271,7 @@ export default function ReceiptViewPage({ params }: { params: Promise<{ id: stri
           <div class="left-col">
             <div class="en">Safwan OPTICALS</div>
             <div style="font-size:9pt;color:#555">Abdul Rahman Ibn Ahmad As Sidayri, As Salamah, Jeddah 23436</div>
-            <div style="font-size:9pt">Phone: +966 05 0918 3807 | VAT: 300833099900003</div>
+            <div style="font-size:9pt">Phone: +966 05 0918 3807 | VAT: 310158981300003</div>
           </div>
           <div class="right-col" style="text-align:right">
             <div class="ar" style="font-size:12pt;font-weight:bold">صفوان للبصريات</div>
@@ -300,7 +300,7 @@ export default function ReceiptViewPage({ params }: { params: Promise<{ id: stri
         <div class="sig-box"><div class="sig-line"></div><div>Received By / المستلم</div><div style="font-size:10pt;font-weight:bold;margin-top:2mm">${rec.customer_name || ''}</div></div>
         <div class="sig-box"><div class="sig-line"></div><div>Signature / التوقيع</div></div>
       </div>
-      <div class="footer"><div>Kingdom of Saudi Arabia - Jeddah 23436 | 300833099900003 | Tel: +966 05 0918 3807</div></div>
+      <div class="footer"><div>Kingdom of Saudi Arabia - Jeddah 23436 | 310158981300003 | Tel: +966 05 0918 3807</div></div>
       <div id="print-a4-rec-qr" style="text-align:center;margin-top:8mm"></div>
       <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
       <script>setTimeout(function(){new QRCode(document.getElementById('print-a4-rec-qr'),{text:'${qrUrl}',width:100,height:100,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});setTimeout(function(){window.print();setTimeout(function(){window.close();},500);},400);},200);</script>

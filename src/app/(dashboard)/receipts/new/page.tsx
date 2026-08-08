@@ -154,7 +154,7 @@ export default function NewReceiptPage() {
         <div>Abdul Rahman Ibn Ahmad As Sidayri, As Salamah, Jeddah 23436</div>
         <div class="ar">صفوان للبصريات - عبد الرحمن بن أحمد السديري، السلامة، جدة</div>
       </div>
-      <div style="text-align:center;font-size:10px">VAT NO: 300833099900003</div>
+      <div style="text-align:center;font-size:10px">VAT NO: 310158981300003</div>
       <div class="divider"></div>
       <div class="title">Receipt Voucher / سند قبض</div>
       <table class="info-table">
@@ -194,7 +194,7 @@ export default function NewReceiptPage() {
         <div class="sig-box"><div class="sig-line"></div><div>Signature / التوقيع</div></div>
       </div>
       <div class="footer">
-        <div>Kingdom of Saudi Arabia - Jeddah 23436 | 300833099900003</div>
+        <div>Kingdom of Saudi Arabia - Jeddah 23436 | 310158981300003</div>
         <div>Tel: +966 05 0918 3807</div>
       </div>
       <div class="qr" id="rec-qr"></div>

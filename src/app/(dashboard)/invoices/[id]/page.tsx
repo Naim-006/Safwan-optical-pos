@@ -80,7 +80,7 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
         <div class="ar">عبد الرحمن بن أحمد السديري، السلامة، جدة</div>
       </div>
       <div style="text-align:center;font-size:10px">Phone: +966 05 0918 3807</div>
-      <div style="text-align:center;font-size:10px">VAT No: 300833099900003</div>
+      <div style="text-align:center;font-size:10px">VAT No: 310158981300003</div>
       <div class="title">INVOICE</div>
 
       <div class="section">
@@ -192,7 +192,7 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
         <div class="hdr">
           <h1>Safwan OPTICALS</h1>
           <div class="address">Abdul Rahman Ibn Ahmed As Sidayri, As Salamah, Jeddah 23436</div>
-          <div class="address"><b>Phone:</b> +966 05 0918 3807  |  <b>VAT No:</b> 300833099900003</div>
+          <div class="address"><b>Phone:</b> +966 05 0918 3807  |  <b>VAT No:</b> 310158981300003</div>
         </div>
 
         <div class="title">INVOICE</div>
@@ -328,7 +328,7 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
       <div class="hdr">
         <h1>Safwan OPTICALS</h1>
         <div class="address">Abdul Rahman Ibn Ahmed As Sidayri, As Salamah, Jeddah 23436</div>
-        <div class="address"><b>Phone:</b> +966 05 0918 3807  |  <b>VAT No:</b> 300833099900003</div>
+        <div class="address"><b>Phone:</b> +966 05 0918 3807  |  <b>VAT No:</b> 310158981300003</div>
       </div>
       <div class="title">INVOICE</div>
       <div class="cols">

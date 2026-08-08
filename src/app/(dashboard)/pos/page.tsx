@@ -321,7 +321,7 @@ export default function PosPage() {
         <div>Abdur Rahman Ibn Ahmed As Sidayri, As Salamah, Jeddah 23436</div>
         <div class="ar">عبد الرحمن بن أحمد السديري، السلامة، جدة</div>
       </div>
-      <div style="text-align:center;font-size:11px;margin:2mm 0">VAT No: 300833099900003</div>
+      <div style="text-align:center;font-size:11px;margin:2mm 0">VAT No: 310158981300003</div>
       <div style="text-align:center;font-weight:bold;font-size:13px">Invoice No: ${invoiceNumber}</div>
       <div style="text-align:center;font-size:11px">Date: ${date}</div>
       <div class="divider"></div>
