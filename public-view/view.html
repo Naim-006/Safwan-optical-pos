@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="/src/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -15,23 +14,34 @@
     <div id="error" class="error-msg" style="display:none"><h2>Invoice Not Found</h2><p id="error-text"></p><a href="/" class="btn">Back to Home</a></div>
     <div id="invoice-container"></div>
   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script type="module">
     import { getSupabase, formatCurrency, numberToWords, formatDate } from '/src/utils.js'
 
-    const supabase = getSupabase()
+    const sb = getSupabase()
     const params = new URLSearchParams(window.location.search)
     const id = params.get('id')
 
-    if (!id) showError('No invoice ID provided')
+    if (!sb) showError('System unavailable. Check Supabase config.')
+    else if (!id) showError('No invoice ID provided')
     else loadInvoice(id)
 
     async function loadInvoice(id) {
-      if (!supabase) { showError('System unavailable'); return }
-      const { data: invoice, error } = await supabase.from('invoices').select('*').eq('id', id).single()
-      if (error || !invoice) { showError('Invoice not found'); return }
-      const { data: items } = await supabase.from('invoice_items').select('*').eq('invoice_id', id)
+      const { data: invoice, error } = await sb.from('invoices').select('*').eq('id', id).single()
+      if (error) {
+        console.error(error)
+        if (error.code === 'PGRST116') showError('Invoice not found — the record may have been deleted.')
+        else if (error.code === '42501' || error.message?.includes('permission'))
+          showError('Access denied. Run the public RLS migration in Supabase SQL Editor:\n\nCREATE POLICY "Public read" ON invoices FOR SELECT USING (true);')
+        else showError('Error: ' + (error.message || 'Unknown'))
+        return
+      }
+      if (!invoice) { showError('Invoice not found'); return }
+
+      const { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', id)
       let shopName = 'Safwan Opticals'
-      try { const { data: s } = await supabase.from('settings').select('*').limit(1).single(); if (s) shopName = s.shop_name || shopName } catch {}
+      try { const { data: s } = await sb.from('settings').select('*').limit(1).single(); if (s) shopName = s.shop_name || shopName } catch {}
       render(invoice, items || [], shopName)
     }
 
@@ -39,8 +49,8 @@
       const isReceipt = inv.invoice_type === 'receipt'
       const isOptical = inv.right_sphere != null
       const c = document.getElementById('invoice-container')
-
       let h = '<div class="card">'
+
       h += '<div class="hdr"><div class="sname">'+shopName+'</div><div class="addr">Abdul Rahman Ibn Ahmad As Sidayri, As Salamah, Jeddah 23436</div><div class="meta">VAT: 300833099900003 | Tel: +966 05 0918 3807</div></div>'
       h += '<div class="status"><span class="type">'+(isReceipt?'Receipt Voucher':'Invoice')+'</span><span class="badge '+inv.payment_status+'">'+inv.payment_status.toUpperCase()+'</span></div>'
       h += '<div class="grid2">'
@@ -84,8 +94,7 @@
 
       if (!isReceipt) h += '<div class="words">'+numberToWords(Math.floor(inv.total_amount))+' Saudi Riyals</div>'
       if (inv.notes) h += '<div class="notes"><b>Notes:</b> '+inv.notes+'</div>'
-      h += '<div class="ftr">Verified digitally | Safwan Opticals</div>'
-      h += '</div>'
+      h += '<div class="ftr">Verified digitally | Safwan Opticals</div></div>'
 
       c.innerHTML = h
       document.getElementById('loading').style.display = 'none'
