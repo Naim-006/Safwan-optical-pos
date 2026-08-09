@@ -1,8 +1,8 @@
 export const isTauri = (): boolean =>
-  typeof window !== 'undefined' && (window as any).__TAURI__ != null
+  typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__ != null
 
 function invoke(cmd: string, args?: Record<string, unknown>): Promise<unknown> {
-  return (window as any).__TAURI__.core.invoke(cmd, args)
+  return (window as any).__TAURI_INTERNALS__.invoke(cmd, args)
 }
 
 export async function saveFile(filename: string, blob: Blob): Promise<string | null> {
@@ -39,28 +39,19 @@ export function savePdf(doc: any, filename: string): void {
   }
 }
 
-export async function printHtml(html: string): Promise<void> {
-  if (isTauri()) {
-    try {
-      await invoke('print_html', { html })
-    } catch (error) {
-      console.error('Print failed:', error)
-      throw error
-    }
-  } else {
-    const win = window.open('', '_blank')
-    if (!win) throw new Error('Failed to open print window')
-    win.document.write(html)
-    win.document.close()
-    win.print()
-  }
-}
-
 export function openPrintDoc(size: { width: number; height: number }): { doc: Document } | null {
   if (isTauri()) {
-    // For Tauri, we'll use the printHtml function instead
-    // This function is kept for compatibility but returns null
-    return null
+    const frame = document.createElement('iframe')
+    frame.setAttribute('aria-hidden', 'true')
+    frame.style.cssText = `position:fixed;top:0;left:-10000px;width:${size.width}px;height:${size.height}px;border:0;`
+    document.body.appendChild(frame)
+    const win = frame.contentWindow
+    if (!win) {
+      frame.remove()
+      return null
+    }
+    win.addEventListener('afterprint', () => frame.remove())
+    return { doc: win.document }
   }
   const win = window.open('', '', `width=${size.width},height=${size.height}`)
   if (!win) return null

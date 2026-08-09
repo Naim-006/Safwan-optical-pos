@@ -123,6 +123,8 @@ export default function DashboardLayout({
         )}
       >
         <div className="flex h-14 items-center gap-2 border-b px-4">
+          <Glasses className="h-6 w-6 text-primary hidden lg:block" />
+          <span className="font-bold text-lg hidden lg:block">{shop?.shopName || 'Safwan Opticals'}</span>
           <Button
             variant="ghost"
             size="icon"
@@ -166,23 +168,23 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
-        <header className="flex h-14 items-center gap-2 sm:gap-4 border-b bg-card px-3 sm:px-4 lg:px-6 safe-top">
+        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:px-6">
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden h-9 w-9"
+            className="lg:hidden"
             onClick={() => setSidebarOpen(true)}
           >
-            <Menu className="h-4 w-4" />
+            <Menu className="h-5 w-5" />
           </Button>
 
-          {/* Shop name and icon - mobile only */}
-          <div className="flex items-center gap-2 flex-1 lg:hidden">
-            <Glasses className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold text-sm truncate">{shop?.shopName || 'Safwan Opticals'}</span>
+          {/* Shop name - mobile only */}
+          <div className="flex items-center gap-2 lg:hidden">
+            <Glasses className="h-4 w-4 text-primary" />
+            <span className="font-semibold text-sm truncate max-w-[150px]">{shop?.shopName || 'Safwan Opticals'}</span>
           </div>
 
-          <div className="flex-1 lg:flex-none" />
+          <div className="flex-1" />
 
           {/* Theme toggle */}
           <DropdownMenu>
@@ -217,7 +219,7 @@ export default function DashboardLayout({
               <Avatar className="h-8 w-8">
                 <AvatarFallback>SA</AvatarFallback>
               </Avatar>
-              <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuGroup>
@@ -235,13 +237,13 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto p-2 sm:p-4 lg:p-6 pb-22 lg:pb-6">
+        <main className="flex-1 overflow-auto p-4 sm:p-4 lg:p-6 pb-20 lg:pb-6">
           {children}
         </main>
       </div>
 
       {/* Mobile bottom navigation */}
-      <nav className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-stretch justify-around border-t bg-gradient-to-t from-card via-card to-card/95 backdrop-blur-xl supports-[backdrop-filter]:bg-card/80 lg:hidden safe-bottom shadow-2xl shadow-black/5">
+      <nav className="fixed inset-x-0 bottom-0 z-50 flex h-[56px] items-stretch justify-around border-t bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 lg:hidden safe-bottom shadow-lg">
         {[
           { name: t('common.dashboard'), href: '/', icon: LayoutDashboard },
           { name: t('common.pos'), href: '/pos', icon: ShoppingCart },
@@ -257,25 +259,20 @@ export default function DashboardLayout({
               href={item.href}
               onClick={() => setSidebarOpen(false)}
               className={cn(
-                'flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-all duration-300 relative group',
+                'flex flex-1 flex-col items-center justify-center gap-0.5 py-1 transition-all duration-200 relative',
                 isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               )}
             >
               {isActive && (
-                <>
-                  <span className="absolute top-0 h-1 w-10 bg-gradient-to-r from-primary/50 via-primary to-primary/50 rounded-full shadow-lg shadow-primary/30" />
-                  <span className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent rounded-lg" />
-                </>
+                <span className="absolute top-0 h-0.5 w-6 bg-primary rounded-full" />
               )}
               <div className={cn(
-                'relative rounded-2xl p-2.5 transition-all duration-300',
-                isActive 
-                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-110' 
-                  : 'group-hover:bg-accent group-hover:scale-105'
+                'rounded-lg p-1 transition-all duration-200',
+                isActive ? 'bg-primary/10' : 'hover:bg-accent'
               )}>
-                <item.icon className={cn('h-5 w-5', isActive && 'animate-pulse')} />
+                <item.icon className={cn('h-4 w-4', isActive && 'scale-110')} />
               </div>
-              <span className="text-[11px] font-semibold truncate max-w-full px-1">{item.name}</span>
+              <span className="text-[10px] font-medium truncate max-w-full px-0.5">{item.name}</span>
             </Link>
           )
         })}

@@ -146,13 +146,6 @@
   .safe-top {
     padding-top: env(safe-area-inset-top, 0px);
   }
-  
-  /* Mobile header safe area */
-  @media (max-width: 768px) {
-    .safe-top {
-      padding-top: max(env(safe-area-inset-top, 0px), 8px);
-    }
-  }
 
   /* Thin, clean horizontal scrollbars for table wrappers */
   .scroll-x {

@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import {
   Plus, Search, Trash2, Edit, Download, Upload, Package, Save,
-  Printer, Barcode, RefreshCw, AlertTriangle, ChevronLeft, ChevronRight,
+  Printer, Barcode, RefreshCw, AlertTriangle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import JsBarcode from 'jsbarcode'
@@ -344,47 +344,47 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="space-y-3 pb-20 lg:pb-0">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-base sm:text-2xl font-bold tracking-tight">{t('inventory.title')}</h1>
-          <p className="text-xs text-muted-foreground hidden sm:block">{t('inventory.subtitle')}</p>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('inventory.title')}</h1>
+          <p className="text-muted-foreground">{t('inventory.subtitle')}</p>
         </div>
-        <div className="flex gap-1.5 flex-wrap">
+        <div className="flex gap-2 flex-wrap">
           {selectedForPrint.size > 0 && (
-            <Button variant="secondary" size="sm" onClick={handlePrintSelected} className="h-8 text-xs hidden sm:flex">
-              <Printer className="h-3 w-3 mr-1.5" /> Print ({selectedForPrint.size})
+            <Button variant="secondary" size="sm" onClick={handlePrintSelected}>
+              <Printer className="h-4 w-4 mr-2" /> Print Selected ({selectedForPrint.size})
             </Button>
           )}
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none h-8 text-xs hidden sm:flex" onClick={handlePrintAll}>
-            <Printer className="h-3 w-3 mr-1.5" /> Print All
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handlePrintAll}>
+            <Printer className="h-4 w-4 mr-2" /> Print All
           </Button>
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none h-8 text-xs hidden sm:flex" onClick={handleExport}>
-            <Download className="h-3 w-3 mr-1.5" /> Export
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handleExport}>
+            <Download className="h-4 w-4 mr-2" /> Export
           </Button>
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none h-8 text-xs hidden sm:flex" onClick={handleImport}>
-            <Upload className="h-3 w-3 mr-1.5" /> Import
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handleImport}>
+            <Upload className="h-4 w-4 mr-2" /> Import
           </Button>
-          <Button className="flex-1 sm:flex-none h-8 text-xs" onClick={() => { setEditingProduct(null); setDialogOpen(true) }}>
-            <Plus className="h-3 w-3 mr-1.5" /> Add
+          <Button className="flex-1 sm:flex-none" onClick={() => { setEditingProduct(null); setDialogOpen(true) }}>
+            <Plus className="h-4 w-4 mr-2" /> Add Product
           </Button>
         </div>
       </div>
 
       <Card>
-        <CardHeader className="pb-2 px-3">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search products..."
-                className="pl-9 h-8 text-sm"
+                placeholder="Search by name or barcode..."
+                className="pl-9"
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1) }}
               />
             </div>
             <Select value={sortBy} onValueChange={(v) => v && setSortBy(v)}>
-              <SelectTrigger className="w-[130px] h-8 text-xs">
+              <SelectTrigger className="w-[160px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -398,13 +398,14 @@ export default function InventoryPage() {
             </Select>
           </div>
         </CardHeader>
-        <CardContent className="px-3 pb-3">
+        <CardContent>
           {isLoading ? (
-            <div className="text-center py-8 text-muted-foreground text-xs">Loading...</div>
+            <div className="text-center py-12 text-muted-foreground">Loading...</div>
           ) : paginated.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Package className="h-8 w-8 mx-auto mb-2 opacity-20" />
-              <p className="text-xs">No products found</p>
+            <div className="text-center py-12 text-muted-foreground">
+              <Package className="h-12 w-12 mx-auto mb-3 opacity-20" />
+              <p>No products found</p>
+              <p className="text-sm">{search ? 'Try a different search' : 'Add your first product'}</p>
             </div>
           ) : (
             <>
@@ -475,39 +476,39 @@ export default function InventoryPage() {
               </div>
 
               {/* Mobile cards */}
-              <div className="md:hidden space-y-2">
+              <div className="md:hidden space-y-3">
                 {paginated.map((product) => (
-                  <div key={product.id} className="rounded-lg border p-2.5">
-                    <div className="flex items-start gap-2">
+                  <div key={product.id} className="rounded-xl border p-3.5">
+                    <div className="flex items-start gap-3">
                       <input
                         type="checkbox"
-                        className="rounded mt-0.5 shrink-0"
+                        className="rounded mt-1 shrink-0"
                         checked={selectedForPrint.has(product.id)}
                         onChange={() => toggleSelect(product.id)}
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="font-medium text-xs truncate">{product.name}</p>
-                          <span className="font-bold text-xs shrink-0">{formatCurrency(product.price)}</span>
+                          <p className="font-medium text-sm truncate">{product.name}</p>
+                          <span className="font-bold text-sm shrink-0">{formatCurrency(product.price)}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                          {product.category ? <Badge variant="secondary" className="text-[9px]">{product.category}</Badge> : null}
-                          <Badge variant={product.quantity === 0 ? 'destructive' : product.quantity < 5 ? 'secondary' : 'outline'} className="text-[9px]">
-                            {product.quantity === 0 ? 'Out' : product.quantity}
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          {product.category ? <Badge variant="secondary">{product.category}</Badge> : null}
+                          <Badge variant={product.quantity === 0 ? 'destructive' : product.quantity < 5 ? 'secondary' : 'outline'}>
+                            {product.quantity === 0 ? 'Out of stock' : `Stock: ${product.quantity}`}
                           </Badge>
                         </div>
-                        <p className="font-mono text-[10px] text-muted-foreground mt-1 truncate">{product.barcode}</p>
+                        <p className="font-mono text-[11px] text-muted-foreground mt-1.5 truncate">{product.barcode}</p>
                       </div>
                     </div>
-                    <div className="flex justify-end gap-1 mt-1.5 pt-1.5 border-t">
-                      <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={() => handlePrintSingle(product)}>
-                        <Barcode className="h-3 w-3 mr-1" /> Label
+                    <div className="flex justify-end gap-1 mt-2 pt-2 border-t">
+                      <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => handlePrintSingle(product)}>
+                        <Barcode className="h-3.5 w-3.5 mr-1" /> Label
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={() => { setEditingProduct(product); setDialogOpen(true) }}>
-                        <Edit className="h-3 w-3 mr-1" /> Edit
+                      <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setEditingProduct(product); setDialogOpen(true) }}>
+                        <Edit className="h-3.5 w-3.5 mr-1" /> Edit
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={() => setDeleteTarget(product)}>
-                        <Trash2 className="h-3 w-3 mr-1 text-destructive" /> Delete
+                      <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setDeleteTarget(product)}>
+                        <Trash2 className="h-3.5 w-3.5 mr-1 text-destructive" /> Delete
                       </Button>
                     </div>
                   </div>
@@ -515,11 +516,11 @@ export default function InventoryPage() {
               </div>
 
               {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-3">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground hidden sm:flex">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     Show
                     <Select value={String(perPage)} onValueChange={(v) => { if (v) { setPerPage(Number(v)); setPage(1) } }}>
-                      <SelectTrigger className="w-[60px] h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="w-[70px] h-8"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {ITEMS_PER_PAGE_OPTIONS.map((n) => (
                           <SelectItem key={n} value={String(n)}>{n}</SelectItem>
@@ -529,15 +530,15 @@ export default function InventoryPage() {
                     of {filtered.length}
                   </div>
                   <div className="flex gap-1 overflow-x-auto no-scrollbar max-w-full">
-                    <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)} className="h-8 text-xs"><ChevronLeft className="h-3 w-3" /></Button>
+                    <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</Button>
                     {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                       const start = Math.max(0, Math.min(page - 3, totalPages - 5))
                       const p = start + i + 1
                       return (
-                        <Button key={p} variant={p === page ? 'default' : 'outline'} size="sm" onClick={() => setPage(p)} className="h-8 text-xs">{p}</Button>
+                        <Button key={p} variant={p === page ? 'default' : 'outline'} size="sm" onClick={() => setPage(p)}>{p}</Button>
                       )
                     })}
-                    <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(page + 1)} className="h-8 text-xs"><ChevronRight className="h-3 w-3" /></Button>
+                    <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(page + 1)}>Next</Button>
                   </div>
                 </div>
               )}

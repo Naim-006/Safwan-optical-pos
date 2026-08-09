@@ -440,24 +440,24 @@ export default function PosPage() {
 
   // ─── Render ───
   return (
-    <div className="space-y-3 pb-20 lg:pb-0">
+    <div className="space-y-4 pb-20 lg:pb-0">
       <div className="flex items-center justify-between">
-        <h1 className="text-base sm:text-2xl font-bold tracking-tight">{t('pos.title')}</h1>
+        <h1 className="text-lg sm:text-2xl font-bold tracking-tight">{t('pos.title')}</h1>
       </div>
 
-      <div className="grid gap-3 lg:gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 lg:gap-6 lg:grid-cols-3">
         {/* LEFT: Products */}
-        <div className="lg:col-span-2 space-y-3 order-2 lg:order-1">
+        <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
           <Card className="border-t-2 border-t-blue-500 shadow-sm">
-            <CardHeader className="pb-2 px-3 bg-gradient-to-b from-blue-50/80 to-transparent dark:from-blue-950/30 dark:to-transparent rounded-t-xl">
+            <CardHeader className="pb-3 bg-gradient-to-b from-blue-50/80 to-transparent dark:from-blue-950/30 dark:to-transparent rounded-t-xl">
               <div className="flex flex-col sm:flex-row gap-2">
                 <form onSubmit={handleBarcodeSubmit} className="flex-1 flex gap-2">
                   <div className="relative flex-1">
-                    <Scan className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <Scan className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       ref={barcodeRef}
-                      placeholder="Scan barcode..."
-                      className="pl-9 h-8 text-sm"
+                      placeholder="Scan barcode or type..."
+                      className="pl-9 h-10"
                       value={barcodeInput}
                       onChange={(e) => setBarcodeInput(e.target.value)}
                       onKeyDown={(e) => {
@@ -473,40 +473,40 @@ export default function PosPage() {
                       }}
                     />
                   </div>
-                  <Button type="submit" className="h-8 px-3 text-sm">Add</Button>
+                  <Button type="submit" className="h-10 px-4">Add</Button>
                 </form>
               </div>
-              <div className="relative mt-1">
-                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative mt-2">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search products..."
-                  className="pl-9 h-8 text-sm"
+                  placeholder="Search products by name..."
+                  className="pl-9 h-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
             </CardHeader>
-            <CardContent className="p-2">
-              <div className="grid gap-1.5 max-h-[50vh] lg:max-h-[500px] overflow-y-auto -mx-2 px-2">
+            <CardContent className="p-3">
+              <div className="grid gap-2 max-h-[50vh] lg:max-h-[500px] overflow-y-auto -mx-3 px-3">
                 {displayProducts.map((product) => (
                   <div
                     key={product.id}
-                    className="flex items-center justify-between rounded border border-border/60 p-2 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-800 cursor-pointer transition-all active:scale-[0.99] touch-manipulation"
+                    className="flex items-center justify-between rounded-lg border border-border/60 p-3 hover:bg-blue-50 dark:hover:bg-blue-950/30 hover:border-blue-200 dark:hover:border-blue-800 cursor-pointer transition-all active:scale-[0.99] touch-manipulation"
                     onClick={() => addToCart(product)}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-xs truncate">{product.name}</p>
-                      <p className="text-[10px] text-muted-foreground">
+                      <p className="font-medium text-sm truncate">{product.name}</p>
+                      <p className="text-xs text-muted-foreground">
                         {product.barcode} | Stock: {product.quantity}
                       </p>
                     </div>
-                    <div className="text-right ml-2">
-                      <p className="font-bold text-xs">{formatCurrency(product.price)}</p>
+                    <div className="text-right ml-3">
+                      <p className="font-bold text-sm">{formatCurrency(product.price)}</p>
                     </div>
                   </div>
                 ))}
                 {displayProducts.length === 0 && (
-                  <p className="text-muted-foreground text-center py-6 text-xs">No products</p>
+                  <p className="text-muted-foreground text-center py-8">No products</p>
                 )}
               </div>
             </CardContent>
@@ -514,29 +514,28 @@ export default function PosPage() {
         </div>
 
         {/* RIGHT: Cart + Customer + Payment */}
-        <div className="flex flex-col gap-3 order-1 lg:order-2">
+        <div className="flex flex-col gap-4 order-1 lg:order-2">
           {/* ─── CUSTOMER SEARCH & PRESCRIPTION ─── */}
           <Card className="overflow-visible border-t-2 border-t-emerald-500 shadow-sm order-2 xl:order-none scroll-mt-20">
-            <CardHeader className="pb-1.5 px-3 bg-gradient-to-b from-emerald-50/80 to-transparent dark:from-emerald-950/30 dark:to-transparent rounded-t-xl">
-              <CardTitle className="text-xs font-semibold flex items-center gap-2">
-                <User className="h-3.5 w-3.5 text-emerald-600" /> Customer
+            <CardHeader className="pb-2 bg-gradient-to-b from-emerald-50/80 to-transparent dark:from-emerald-950/30 dark:to-transparent rounded-t-xl">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                <User className="h-4 w-4 text-emerald-600" /> Customer
                 {isWalkIn && (
-                  <Badge className="ml-auto text-[9px] bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-slate-300">Walk-in</Badge>
+                  <Badge className="ml-auto text-[10px] bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-slate-300">Walk-in</Badge>
                 )}
                 {selectedCustomerId && (
-                  <Badge className="ml-auto text-[9px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 border-emerald-300">Member</Badge>
+                  <Badge className="ml-auto text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 border-emerald-300">Member</Badge>
                 )}
                 {!selectedCustomerId && customerName && !isWalkIn && (
-                  <Badge className="ml-auto text-[9px] bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 border-amber-300">New</Badge>
+                  <Badge className="ml-auto text-[10px] bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 border-amber-300">New</Badge>
                 )}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 overflow-visible px-3 pb-3">
+            <CardContent className="space-y-3 overflow-visible">
               {/* Customer search */}
               <div className="relative" ref={customerSearchRef}>
                 <Input
-                  placeholder="Search name/phone"
-                  className="h-8 text-sm"
+                  placeholder="Search name/phone · Enter x4 = Walk-in"
                   value={customerSearch}
                   onChange={(e) => { setCustomerSearch(e.target.value); setShowCustomerResults(true) }}
                   onFocus={() => { if (customerSearch.length >= 2) setShowCustomerResults(true) }}
@@ -552,30 +551,30 @@ export default function PosPage() {
                 {showCustomerResults && customerSearch.length >= 2 && (
                   <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg max-h-48 overflow-y-auto">
                     {searchingCustomers ? (
-                      <p className="p-2 text-xs text-muted-foreground">Searching...</p>
+                      <p className="p-2 text-sm text-muted-foreground">Searching...</p>
                     ) : customerResults.length > 0 ? (
                       customerResults.map((c: any) => (
                         <div
                           key={c.id}
-                          className="flex items-center justify-between p-2 hover:bg-accent cursor-pointer text-xs border-b last:border-0"
+                          className="flex items-center justify-between p-2 hover:bg-accent cursor-pointer text-sm border-b last:border-0"
                           onClick={() => selectCustomer(c)}
                         >
                           <div>
                             <p className="font-medium">{c.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{c.phone || 'No phone'}</p>
+                            <p className="text-xs text-muted-foreground">{c.phone || 'No phone'}</p>
                           </div>
                           {c.right_sphere != null && (
-                            <Badge variant="outline" className="text-[9px]">Rx</Badge>
+                            <Badge variant="outline" className="text-[10px]">Rx</Badge>
                           )}
                         </div>
                       ))
                     ) : (
                       <div
-                        className="flex items-center gap-2 p-2 hover:bg-accent cursor-pointer text-xs text-primary font-medium"
+                        className="flex items-center gap-2 p-2 hover:bg-accent cursor-pointer text-sm text-primary font-medium"
                         onClick={openNewCustomer}
                       >
                         <Plus className="h-3 w-3" />
-                        Create &ldquo;{customerSearch}&rdquo;
+                        Create &ldquo;{customerSearch}&rdquo; as new customer
                       </div>
                     )}
                   </div>
@@ -584,23 +583,23 @@ export default function PosPage() {
                 {/* Selected customer display */}
                 {customerName && !showCustomerResults && (
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-gradient-to-r from-emerald-50 to-white dark:from-emerald-950/30 dark:to-transparent border border-emerald-200 dark:border-emerald-800">
-                      <div className="rounded-full bg-emerald-100 dark:bg-emerald-900 p-1">
-                        <User className="h-3.5 w-3.5 text-emerald-600" />
+                    <div className="flex items-center gap-3 p-2.5 rounded-lg bg-gradient-to-r from-emerald-50 to-white dark:from-emerald-950/30 dark:to-transparent border border-emerald-200 dark:border-emerald-800">
+                      <div className="rounded-full bg-emerald-100 dark:bg-emerald-900 p-1.5">
+                        <User className="h-4 w-4 text-emerald-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold truncate">{customerName}</p>
+                        <p className="text-sm font-semibold truncate">{customerName}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <Input
-                            placeholder="Phone"
+                            placeholder="Phone number"
                             value={customerPhone}
                             onChange={(e) => setCustomerPhone(e.target.value)}
-                            className="h-6 text-[10px] flex-1 max-w-[100px]"
+                            className="h-7 text-xs flex-1 max-w-[140px]"
                           />
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-red-50 hover:text-red-500" onClick={clearCustomer}>
-                        <X className="h-3 w-3" />
+                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-red-50 hover:text-red-500" onClick={clearCustomer}>
+                        <X className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -710,38 +709,38 @@ export default function PosPage() {
 
           {/* ─── CART ─── */}
           <Card id="pos-cart" className="border-t-2 border-t-orange-500 shadow-sm order-1 xl:order-none scroll-mt-20">
-            <CardHeader className="pb-1.5 px-3 bg-gradient-to-b from-orange-50/80 to-transparent dark:from-orange-950/30 dark:to-transparent rounded-t-xl">
-              <CardTitle className="flex items-center gap-2 text-xs font-semibold">
-                <ShoppingCart className="h-3.5 w-3.5 text-orange-600" />
+            <CardHeader className="pb-3 bg-gradient-to-b from-orange-50/80 to-transparent dark:from-orange-950/30 dark:to-transparent rounded-t-xl">
+              <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+                <ShoppingCart className="h-5 w-5 text-orange-600" />
                 Cart ({getItemCount()})
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 px-3 pb-3">
-              <div className="space-y-1.5 max-h-[30vh] lg:max-h-[260px] overflow-y-auto -mx-1 px-1">
+            <CardContent className="space-y-4">
+              <div className="space-y-2 max-h-[30vh] lg:max-h-[260px] overflow-y-auto -mx-1 px-1">
                 {cart.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4 text-xs">Cart is empty</p>
+                  <p className="text-muted-foreground text-center py-6 text-sm">Cart is empty</p>
                 ) : (
                   cart.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between border-b pb-1.5">
+                    <div key={item.id} className="flex items-center justify-between border-b pb-2">
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium truncate">{item.name}</p>
+                        <p className="text-sm font-medium truncate">{item.name}</p>
                         <div className="flex items-center gap-1 mt-1">
-                          <Button variant="outline" size="icon" className="h-6 w-6 touch-manipulation"
+                          <Button variant="outline" size="icon" className="h-7 w-7 touch-manipulation"
                             onClick={() => updateQuantity(item.id, item.cartQuantity - 1)}>
-                            <Minus className="h-2.5 w-2.5" />
+                            <Minus className="h-3 w-3" />
                           </Button>
-                          <span className="w-6 text-center text-xs font-medium">{item.cartQuantity}</span>
-                          <Button variant="outline" size="icon" className="h-6 w-6 touch-manipulation"
+                          <span className="w-8 text-center text-sm font-medium">{item.cartQuantity}</span>
+                          <Button variant="outline" size="icon" className="h-7 w-7 touch-manipulation"
                             onClick={() => updateQuantity(item.id, item.cartQuantity + 1)}>
-                            <Plus className="h-2.5 w-2.5" />
+                            <Plus className="h-3 w-3" />
                           </Button>
                         </div>
                       </div>
                       <div className="text-right ml-2">
-                        <p className="font-bold text-xs">{formatCurrency(item.price * item.cartQuantity)}</p>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 touch-manipulation"
+                        <p className="font-bold text-sm">{formatCurrency(item.price * item.cartQuantity)}</p>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 touch-manipulation"
                           onClick={() => removeFromCart(item.id)}>
-                          <Trash2 className="h-3 w-3 text-destructive" />
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
                         </Button>
                       </div>
                     </div>
@@ -750,12 +749,12 @@ export default function PosPage() {
               </div>
 
               {/* Payment */}
-              <div className="space-y-1.5 pt-1 border-t">
-                <div className="grid grid-cols-2 gap-1.5">
+              <div className="space-y-2 pt-1 border-t">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-[10px]">Method</Label>
+                    <Label className="text-xs">Method</Label>
                     <Select value={paymentMethod} onValueChange={(v) => v && setPaymentMethod(v)}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="cash">Cash</SelectItem>
                         <SelectItem value="card">Card</SelectItem>
@@ -764,9 +763,9 @@ export default function PosPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-[10px]">Status</Label>
+                    <Label className="text-xs">Status</Label>
                     <Select value={paymentStatus} onValueChange={(v) => v && setPaymentStatus(v as typeof paymentStatus)}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="paid">Paid</SelectItem>
                         <SelectItem value="partial">Partial</SelectItem>
@@ -777,12 +776,12 @@ export default function PosPage() {
                 </div>
                 {/* Paid amount input for partial */}
                 {paymentStatus === 'partial' && (
-                  <div className="flex items-center gap-1.5">
-                    <Label className="text-[10px] whitespace-nowrap">Paid</Label>
-                    <Input type="number" className="h-7 w-20 text-xs"
+                  <div className="flex items-center gap-2">
+                    <Label className="text-xs whitespace-nowrap">Paid</Label>
+                    <Input type="number" className="h-9 w-24"
                       value={amountPaid || ''}
                       onChange={(e) => setAmountPaid(Number(e.target.value) || 0)} />
-                    <span className="text-[10px] text-muted-foreground">SAR</span>
+                    <span className="text-xs text-muted-foreground">SAR</span>
                   </div>
                 )}
               </div>
@@ -790,7 +789,7 @@ export default function PosPage() {
               <Separator />
 
               {/* Totals */}
-              <div className="space-y-1.5 text-xs">
+              <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>{formatCurrency(subtotal)}</span>
@@ -798,13 +797,13 @@ export default function PosPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Discount</span>
                   <div className="flex items-center gap-1">
-                    <Input type="number" className="w-16 h-7 text-right text-xs"
+                    <Input type="number" className="w-20 h-9 text-right"
                       value={discount || ''} onChange={(e) => setDiscount(Number(e.target.value) || 0)} />
-                    <span className="text-[10px]">SAR</span>
+                    <span>SAR</span>
                   </div>
                 </div>
                 <Separator />
-                <div className="flex justify-between font-bold text-sm">
+                <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
                   <span className="text-orange-600 dark:text-orange-400">{formatCurrency(total)}</span>
                 </div>
@@ -816,14 +815,14 @@ export default function PosPage() {
                 )}
               </div>
 
-              <div className="flex gap-1.5 pt-1">
-                <Button className="flex-1 h-10 text-xs font-semibold"
+              <div className="flex gap-2 pt-2">
+                <Button className="flex-1 h-12 text-base font-semibold"
                   onClick={handleComplete}
                   disabled={cart.length === 0 || (!customerName.trim() && !isWalkIn) || createInvoiceMutation.isPending}>
-                  <ShoppingCart className="h-3 w-3 mr-1.5" />
+                  <ShoppingCart className="h-4 w-4 mr-2" />
                   {!customerName.trim() && !isWalkIn ? 'Select Customer' : 'Complete Sale'}
                 </Button>
-                <Button variant="outline" size="sm" className="h-10 px-3 text-xs" onClick={clearCart} disabled={cart.length === 0}>
+                <Button variant="outline" size="lg" className="h-12 px-4" onClick={clearCart} disabled={cart.length === 0}>
                   Clear
                 </Button>
               </div>

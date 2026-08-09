@@ -94,22 +94,22 @@ export default function DashboardPage() {
   }, [allInvoices])
 
   return (
-    <div className="space-y-3 pb-20 lg:pb-0">
+    <div className="space-y-4 pb-20 lg:pb-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-lg sm:text-2xl font-bold tracking-tight">{t('common.dashboard')}</h1>
-          <p className="text-xs text-muted-foreground hidden sm:block">{t('common.welcomeBack')}</p>
+          <p className="text-sm text-muted-foreground hidden sm:block">{t('common.welcomeBack')}</p>
         </div>
-        <Button size="sm" className="w-full sm:w-auto h-8 text-sm" onClick={() => router.push('/pos')}>
-          <ShoppingCart className="h-3.5 w-3.5 mr-2" /> New Sale
+        <Button size="sm" className="w-full sm:w-auto h-9" onClick={() => router.push('/pos')}>
+          <ShoppingCart className="h-4 w-4 mr-2" /> New Sale
         </Button>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="relative overflow-hidden touch-manipulation active:scale-[0.98] transition-transform">
-          <div className="absolute right-0 top-0 w-16 h-16 bg-green-500/10 rounded-bl-full" />
+          <div className="absolute right-0 top-0 w-20 h-20 bg-green-500/10 rounded-bl-full" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 px-3">
             <CardTitle className="text-[10px] sm:text-sm font-medium">Today&apos;s Sales</CardTitle>
             <div className="rounded-lg bg-green-500/10 p-1">
@@ -118,14 +118,14 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="px-3 pb-3">
             <div className="text-base sm:text-2xl font-bold truncate">{formatCurrency(todaySales)}</div>
-            <p className="text-[9px] sm:text-xs text-muted-foreground mt-0.5">{todayCount} invoices</p>
+            <p className="text-[9px] sm:text-xs text-muted-foreground mt-0.5">{todayCount} invoices today</p>
           </CardContent>
         </Card>
 
         <Card className="relative overflow-hidden touch-manipulation active:scale-[0.98] transition-transform">
-          <div className="absolute right-0 top-0 w-16 h-16 bg-blue-500/10 rounded-bl-full" />
+          <div className="absolute right-0 top-0 w-20 h-20 bg-blue-500/10 rounded-bl-full" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 px-3">
-            <CardTitle className="text-[10px] sm:text-sm font-medium">Products</CardTitle>
+            <CardTitle className="text-[10px] sm:text-sm font-medium">Total Products</CardTitle>
             <div className="rounded-lg bg-blue-500/10 p-1">
               <Package className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
             </div>
@@ -137,9 +137,9 @@ export default function DashboardPage() {
         </Card>
 
         <Card className="relative overflow-hidden touch-manipulation active:scale-[0.98] transition-transform">
-          <div className="absolute right-0 top-0 w-16 h-16 bg-purple-500/10 rounded-bl-full" />
+          <div className="absolute right-0 top-0 w-20 h-20 bg-purple-500/10 rounded-bl-full" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 px-3">
-            <CardTitle className="text-[10px] sm:text-sm font-medium">Customers</CardTitle>
+            <CardTitle className="text-[10px] sm:text-sm font-medium">Total Customers</CardTitle>
             <div className="rounded-lg bg-purple-500/10 p-1">
               <Users className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
             </div>
@@ -151,9 +151,9 @@ export default function DashboardPage() {
         </Card>
 
         <Card className="relative overflow-hidden touch-manipulation active:scale-[0.98] transition-transform">
-          <div className="absolute right-0 top-0 w-16 h-16 bg-red-500/10 rounded-bl-full" />
+          <div className="absolute right-0 top-0 w-20 h-20 bg-red-500/10 rounded-bl-full" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1.5 px-3">
-            <CardTitle className="text-[10px] sm:text-sm font-medium">Pending</CardTitle>
+            <CardTitle className="text-[10px] sm:text-sm font-medium">Pending Balance</CardTitle>
             <div className="rounded-lg bg-red-500/10 p-1">
               <CreditCard className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
             </div>
@@ -169,17 +169,18 @@ export default function DashboardPage() {
       <div className="grid gap-3 lg:gap-6 lg:grid-cols-3">
         {/* Weekly Sales Chart */}
         <Card className="lg:col-span-2">
-          <CardHeader className="pb-2 px-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-              <CardTitle className="text-xs sm:text-lg">Weekly Sales</CardTitle>
+          <CardHeader className="pb-2 px-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <CardTitle className="text-sm sm:text-lg">Weekly Sales Overview</CardTitle>
               <div className="flex items-center gap-2 text-[10px] sm:text-sm text-muted-foreground">
                 <span>Total: <strong>{formatCurrency(totalSales)}</strong></span>
+                <span className="hidden sm:inline">Paid: <strong className="text-green-600">{formatCurrency(paidTotal)}</strong></span>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="px-3 pb-3">
+          <CardContent className="px-4">
             {last7Days.some((d: any) => d.sales > 0) ? (
-              <ResponsiveContainer width="100%" height={160}>
+              <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={last7Days}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="date" fontSize={9} tickLine={false} />
@@ -188,13 +189,13 @@ export default function DashboardPage() {
                     formatter={(value: any) => [formatCurrency(Number(value) || 0), 'Sales'] as [string, string]}
                     contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
                   />
-                  <Bar dataKey="sales" fill="hsl(217, 91%, 60%)" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="sales" fill="hsl(217, 91%, 60%)" radius={[4, 4, 0, 0]} maxBarSize={32} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-[160px] text-muted-foreground">
-                <TrendingUp className="h-8 w-8 opacity-20 mr-2" />
-                <span className="text-xs">No sales data</span>
+              <div className="flex items-center justify-center h-[180px] text-muted-foreground">
+                <TrendingUp className="h-8 w-8 opacity-20 mr-3" />
+                <span className="text-xs">No sales data yet</span>
               </div>
             )}
           </CardContent>
@@ -202,36 +203,39 @@ export default function DashboardPage() {
 
         {/* Recent Activity */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2 px-3">
-            <CardTitle className="text-xs sm:text-lg">Recent</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 px-4">
+            <CardTitle className="text-sm sm:text-lg">Recent Activity</CardTitle>
             <Button variant="ghost" size="sm" className="gap-1 text-[10px] h-7 px-2" onClick={() => router.push('/invoices')}>
               View all <ChevronRight className="h-3 w-3" />
             </Button>
           </CardHeader>
-          <CardContent className="space-y-1 px-3 pb-3">
+          <CardContent className="space-y-1 px-4">
             {recentTransactions.length > 0 ? (
               recentTransactions.map((inv: any) => (
                 <Link
                   key={inv.id}
                   href={`/invoices/${inv.id}`}
-                  className="flex items-center gap-2 p-1.5 -mx-1.5 rounded hover:bg-accent transition-colors touch-manipulation"
+                  className="flex items-center gap-2 p-1.5 -mx-1.5 rounded-lg hover:bg-accent transition-colors touch-manipulation"
                 >
                   <div className={`rounded-full p-1.5 ${inv.invoice_type === 'receipt' ? 'bg-orange-500/10' : 'bg-blue-500/10'}`}>
                     {inv.invoice_type === 'receipt'
-                      ? <Receipt className="h-3 w-3 text-orange-600" />
-                      : <FileText className="h-3 w-3 text-blue-600" />
+                      ? <Receipt className="h-3.5 w-3.5 text-orange-600" />
+                      : <FileText className="h-3.5 w-3.5 text-blue-600" />
                     }
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">
+                    <p className="text-xs sm:text-sm font-medium truncate">
                       {inv.customer_name || 'Walk-in'}
                     </p>
                     <p className="text-[10px] text-muted-foreground">
-                      {inv.invoice_number}
+                      {inv.invoice_number} &middot; {new Date(inv.created_at).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs font-bold">{formatCurrency(inv.total_amount)}</p>
+                    <p className="text-xs sm:text-sm font-bold">{formatCurrency(inv.total_amount)}</p>
+                    <Badge variant={inv.payment_status === 'paid' ? 'default' : 'destructive'} className="text-[9px] h-4 px-1">
+                      {inv.payment_status}
+                    </Badge>
                   </div>
                 </Link>
               ))
@@ -239,6 +243,7 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
                 <FileText className="h-8 w-8 mb-2 opacity-20" />
                 <p className="text-xs">No recent activity</p>
+                <p className="text-[10px] mt-1">Sales and invoices will appear here</p>
               </div>
             )}
           </CardContent>
@@ -249,57 +254,63 @@ export default function DashboardPage() {
       <div className="grid gap-3 lg:gap-6 lg:grid-cols-3">
         {/* Quick Actions */}
         <Card className="lg:col-span-2">
-          <CardHeader className="pb-2 px-3">
-            <CardTitle className="text-xs sm:text-lg">Quick Actions</CardTitle>
+          <CardHeader className="pb-2 px-4">
+            <CardTitle className="text-sm sm:text-lg">Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-3 gap-1.5 sm:grid-cols-2 lg:grid-cols-3 px-3 pb-3">
-            <Link href="/pos" className="flex flex-col items-center gap-1 rounded-lg border border-dashed p-2 hover:border-primary hover:bg-primary/5 transition-all group touch-manipulation active:scale-[0.98]">
+          <CardContent className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:grid-cols-3 px-4">
+            <Link href="/pos" className="flex flex-col items-center gap-1 rounded-xl border-2 border-dashed p-2 hover:border-primary hover:bg-primary/5 transition-all group touch-manipulation active:scale-[0.98]">
               <div className="rounded-full bg-blue-500/10 p-1.5 group-hover:bg-blue-500/20 transition-colors">
-                <ShoppingCart className="h-3.5 w-3.5 text-blue-600" />
+                <ShoppingCart className="h-4 w-4 text-blue-600" />
               </div>
-              <span className="text-[10px] sm:text-xs font-semibold">Sale</span>
+              <span className="text-[10px] sm:text-sm font-semibold">New Sale</span>
+              <span className="text-[9px] sm:text-xs text-muted-foreground">POS billing</span>
             </Link>
-            <Link href="/invoices/new" className="flex flex-col items-center gap-1 rounded-lg border border-dashed p-2 hover:border-primary hover:bg-primary/5 transition-all group touch-manipulation active:scale-[0.98]">
+            <Link href="/invoices/new" className="flex flex-col items-center gap-1 rounded-xl border-2 border-dashed p-2 hover:border-primary hover:bg-primary/5 transition-all group touch-manipulation active:scale-[0.98]">
               <div className="rounded-full bg-green-500/10 p-1.5 group-hover:bg-green-500/20 transition-colors">
-                <FileText className="h-3.5 w-3.5 text-green-600" />
+                <FileText className="h-4 w-4 text-green-600" />
               </div>
-              <span className="text-[10px] sm:text-xs font-semibold">Invoice</span>
+              <span className="text-[10px] sm:text-sm font-semibold">New Invoice</span>
+              <span className="text-[9px] sm:text-xs text-muted-foreground">Optical Rx invoice</span>
             </Link>
-            <Link href="/receipts/new" className="flex flex-col items-center gap-1 rounded-lg border border-dashed p-2 hover:border-primary hover:bg-primary/5 transition-all group touch-manipulation active:scale-[0.98]">
+            <Link href="/receipts/new" className="flex flex-col items-center gap-1 rounded-xl border-2 border-dashed p-2 hover:border-primary hover:bg-primary/5 transition-all group touch-manipulation active:scale-[0.98]">
               <div className="rounded-full bg-orange-500/10 p-1.5 group-hover:bg-orange-500/20 transition-colors">
-                <Receipt className="h-3.5 w-3.5 text-orange-600" />
+                <Receipt className="h-4 w-4 text-orange-600" />
               </div>
-              <span className="text-[10px] sm:text-xs font-semibold">Receipt</span>
+              <span className="text-[10px] sm:text-sm font-semibold">New Receipt</span>
+              <span className="text-[9px] sm:text-xs text-muted-foreground">Payment voucher</span>
             </Link>
-            <Link href="/customers" className="flex flex-col items-center gap-1 rounded-lg border border-dashed p-2 hover:border-primary hover:bg-primary/5 transition-all group touch-manipulation active:scale-[0.98]">
+            <Link href="/customers" className="flex flex-col items-center gap-1 rounded-xl border-2 border-dashed p-2 hover:border-primary hover:bg-primary/5 transition-all group touch-manipulation active:scale-[0.98]">
               <div className="rounded-full bg-purple-500/10 p-1.5 group-hover:bg-purple-500/20 transition-colors">
-                <Users className="h-3.5 w-3.5 text-purple-600" />
+                <Users className="h-4 w-4 text-purple-600" />
               </div>
-              <span className="text-[10px] sm:text-xs font-semibold">Customers</span>
+              <span className="text-[10px] sm:text-sm font-semibold">Customers</span>
+              <span className="text-[9px] sm:text-xs text-muted-foreground">Manage members</span>
             </Link>
-            <Link href="/inventory" className="flex flex-col items-center gap-1 rounded-lg border border-dashed p-2 hover:border-primary hover:bg-primary/5 transition-all group touch-manipulation active:scale-[0.98]">
+            <Link href="/inventory" className="flex flex-col items-center gap-1 rounded-xl border-2 border-dashed p-2 hover:border-primary hover:bg-primary/5 transition-all group touch-manipulation active:scale-[0.98]">
               <div className="rounded-full bg-cyan-500/10 p-1.5 group-hover:bg-cyan-500/20 transition-colors">
-                <Package className="h-3.5 w-3.5 text-cyan-600" />
+                <Package className="h-4 w-4 text-cyan-600" />
               </div>
-              <span className="text-[10px] sm:text-xs font-semibold">Inventory</span>
+              <span className="text-[10px] sm:text-sm font-semibold">Inventory</span>
+              <span className="text-[9px] sm:text-xs text-muted-foreground">Stock management</span>
             </Link>
-            <Link href="/reports" className="flex flex-col items-center gap-1 rounded-lg border border-dashed p-2 hover:border-primary hover:bg-primary/5 transition-all group touch-manipulation active:scale-[0.98]">
+            <Link href="/reports" className="flex flex-col items-center gap-1 rounded-xl border-2 border-dashed p-2 hover:border-primary hover:bg-primary/5 transition-all group touch-manipulation active:scale-[0.98]">
               <div className="rounded-full bg-rose-500/10 p-1.5 group-hover:bg-rose-500/20 transition-colors">
-                <TrendingUp className="h-3.5 w-3.5 text-rose-600" />
+                <TrendingUp className="h-4 w-4 text-rose-600" />
               </div>
-              <span className="text-[10px] sm:text-xs font-semibold">Reports</span>
+              <span className="text-[10px] sm:text-sm font-semibold">Reports</span>
+              <span className="text-[9px] sm:text-xs text-muted-foreground">Analytics & charts</span>
             </Link>
           </CardContent>
         </Card>
 
         {/* Payment Method Breakdown */}
         <Card>
-          <CardHeader className="pb-2 px-3">
-            <CardTitle className="text-xs sm:text-lg">Payments</CardTitle>
+          <CardHeader className="pb-2 px-4">
+            <CardTitle className="text-sm sm:text-lg">Payment Methods</CardTitle>
           </CardHeader>
-          <CardContent className="px-3 pb-3">
+          <CardContent className="px-4">
             {paymentBreakdown.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {paymentBreakdown.map((item) => {
                   const total = paymentBreakdown.reduce((s, i) => s + i.value, 0)
                   const pct = total > 0 ? Math.round((item.value / total) * 100) : 0
@@ -312,7 +323,7 @@ export default function DashboardPage() {
                     cash: 'Cash', card: 'Card', transfer: 'Transfer',
                   }
                   return (
-                    <div key={item.name} className="space-y-0.5">
+                    <div key={item.name} className="space-y-1">
                       <div className="flex justify-between text-[10px] sm:text-sm">
                         <span className="font-medium">{labels[item.name] || item.name}</span>
                         <span className="text-muted-foreground">{pct}%</span>
@@ -329,9 +340,9 @@ export default function DashboardPage() {
                 })}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-6 text-center text-muted-foreground">
+              <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
                 <Banknote className="h-8 w-8 mb-2 opacity-20" />
-                <p className="text-xs">No payment data</p>
+                <p className="text-xs">No payment data yet</p>
               </div>
             )}
           </CardContent>
