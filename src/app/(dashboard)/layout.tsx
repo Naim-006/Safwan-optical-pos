@@ -41,6 +41,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/contexts/lang-provider'
+import { useShopSettings } from '@/hooks/use-data'
 
 export default function DashboardLayout({
   children,
@@ -52,6 +53,7 @@ export default function DashboardLayout({
   const router = useRouter()
   const { theme, setTheme } = useTheme()
   const { t, lang } = useLang()
+  const { data: shop } = useShopSettings()
   const [userEmail, setUserEmail] = useState<string>('')
   const supabase = useMemo(() => {
     try { return createClient() } catch { return null }
@@ -120,7 +122,7 @@ export default function DashboardLayout({
       >
         <div className="flex h-14 items-center gap-2 border-b px-4">
           <Glasses className="h-6 w-6 text-primary" />
-          <span className="font-bold text-lg">Safwan Opticals</span>
+          <span className="font-bold text-lg">{shop?.shopName || 'Safwan Opticals'}</span>
           <Button
             variant="ghost"
             size="icon"

@@ -32,6 +32,7 @@ import { productSchema, type ProductInput } from '@/lib/validators'
 import { generateBarcode, formatCurrency } from '@/lib/utils'
 import {
   useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct,
+  useShopSettings,
 } from '@/hooks/use-data'
 import type { Product } from '@/types/database'
 import { useLang } from '@/contexts/lang-provider'
@@ -56,6 +57,7 @@ export default function InventoryPage() {
   const barcodeCanvasRef = useRef<HTMLCanvasElement>(null)
 
   const { data: products = [], isLoading } = useProducts()
+  const { data: shop } = useShopSettings()
   const createMutation = useCreateProduct()
   const updateMutation = useUpdateProduct()
   const deleteMutation = useDeleteProduct()
@@ -248,7 +250,7 @@ export default function InventoryPage() {
 
       printWindow.document.write(`
         <div class="sticker">
-          <div class="shop">Safwan OPTICALS</div>
+          <div class="shop">${shop?.shopName || 'Safwan Opticals'}</div>
           <div class="name">${product.name}</div>
           <div class="bc-wrap">
             <img src="${img}" alt="barcode" />

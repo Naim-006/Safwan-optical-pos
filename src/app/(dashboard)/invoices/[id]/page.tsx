@@ -12,8 +12,9 @@ import { Separator } from '@/components/ui/separator'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
-import { useInvoice, useInvoiceItems } from '@/hooks/use-data'
+import { useInvoice, useInvoiceItems, useShopSettings } from '@/hooks/use-data'
 import { formatCurrency, numberToWords } from '@/lib/utils'
+import { generateA4Html, invoiceTotalsHtml, shopHeaderHtml, type ShopInfo } from '@/lib/shop-template'
 
 const PUBLIC_URL = 'https://safwanoptical-view.vercel.app'
 const SITE_URL = PUBLIC_URL
@@ -23,6 +24,7 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
   const router = useRouter()
   const { data: invoice, isLoading } = useInvoice(id)
   const { data: items = [] } = useInvoiceItems(id)
+  const { data: shop } = useShopSettings()
 
   if (isLoading) {
     return <div className="text-center py-12 text-muted-foreground">Loading...</div>
@@ -75,13 +77,7 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
       .qrcode { text-align: center; margin: 5mm auto; }
       .qrcode img { width: 40mm; height: 40mm; }
     </style></head><body>
-      <div class="header">
-        <h2>Safwan OPTICALS</h2>
-        <div>Abdur Rahman Ibn Ahmed As Sidayri, As Salamah, Jeddah 23436</div>
-        <div class="ar">عبد الرحمن بن أحمد السديري، السلامة، جدة</div>
-      </div>
-      <div style="text-align:center;font-size:10px">Phone: +966 05 0918 3807</div>
-      <div style="text-align:center;font-size:10px">VAT No: 310158981300003</div>
+      <div class="header">${shopHeaderHtml(shop)}</div>
       <div class="title">INVOICE</div>
 
       <div class="section">
@@ -139,7 +135,7 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
       <div class="footer">
         <div>Thank you for shopping with us!</div>
         <div>شكراً لتسوقك معنا!</div>
-        <div>Tel: +966 05 0918 3807</div>
+        <div>Tel: ${shop?.phone || '+966 05 0918 3807'}</div>
       </div>
 
       <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -159,196 +155,92 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
   }
 
   // ─── A4 PDF Download ───
-  const handlePDF = () => {
-    const pdfWin = window.open('', '', 'width=800,height=900')
-    if (!pdfWin) return
-
-    pdfWin.document.write(`<!DOCTYPE html><html><head><title>PDF Export</title><style>
-      @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
-      body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #fff; }
-      #pdf-content { width: 210mm; max-width: 210mm; padding: 10mm; margin: 0 auto; background: white; color: #000; font-size: 10pt; box-sizing: border-box; }
-      .hdr { text-align: center; margin-bottom: 8mm; border-bottom: 2px solid #1a1a2e; padding-bottom: 5mm; }
-      .hdr h1 { margin: 0; font-size: 18pt; font-weight: bold; color: #1a1a2e; }
-      .hdr .address { font-size: 9pt; color: #555; margin: 2mm 0; }
-      .title { text-align: center; font-size: 14pt; font-weight: bold; margin: 5mm 0; }
-      .cols { display: flex; justify-content: space-between; margin-bottom: 5mm; font-size: 10pt; }
-      .cols .left, .cols .right { width: 48%; }
-      .rx-boxes { display: flex; gap: 3mm; margin-bottom: 5mm; }
-      .rx-box { flex: 1; background: #f5f5f5; border: 1px solid #ccc; border-radius: 4px; padding: 6px; }
-      .rx-box h4 { margin: 0 0 3mm; font-size: 10pt; text-align: center; }
-      .rx-box table { width: 100%; font-size: 9pt; }
-      .rx-box td { padding: 1mm 0; }
-      .items-table { width: 100%; border-collapse: collapse; margin: 5mm 0; }
-      .items-table th { background: #f0f0f0; border-bottom: 2px solid #000; padding: 5px; text-align: left; }
-      .items-table td { padding: 5px; border-bottom: 1px solid #ddd; }
-      .summary { width: 100%; border-collapse: collapse; margin-bottom: 3mm; }
-      .summary td { padding: 3px; }
-      .summary .total-row { border: 2px solid #000; background: #f9f9f9; font-weight: bold; }
-      .words { text-align: center; margin: 5mm 0; font-weight: bold; font-size: 10pt; }
-      .qr-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10mm; }
-      .qr-footer .qr-box { width: 30mm; height: 30mm; }
-      .thanks { text-align: right; }
-    </style></head><body>
-      <div id="pdf-content">
-        <div class="hdr">
-          <h1>Safwan OPTICALS</h1>
-          <div class="address">Abdul Rahman Ibn Ahmed As Sidayri, As Salamah, Jeddah 23436</div>
-          <div class="address"><b>Phone:</b> +966 05 0918 3807  |  <b>VAT No:</b> 310158981300003</div>
-        </div>
-
-        <div class="title">INVOICE</div>
-
-        <div class="cols">
-          <div class="left">
-            <p><b>Invoice #:</b> ${inv.invoice_number}</p>
-            <p><b>Customer:</b> ${inv.customer_name || 'Walk-in'}</p>
-            <p><b>Phone:</b> ${inv.customer_phone || '-'}</p>
-          </div>
-          <div class="right" style="text-align:right">
-            <p><b>Date:</b> ${date}</p>
-            <p><b>Status:</b> ${(inv.payment_status || '').toUpperCase()}</p>
-            <p><b>Method:</b> ${inv.payment_method || '-'}</p>
-          </div>
-        </div>
-
-        ${(inv.right_sphere != null || inv.eye_type) ? `
-        <h3 style="text-align:center;margin:4mm 0 2mm;font-size:12pt;font-weight:bold">OPTICAL MEASUREMENTS</h3>
-        <div class="rx-boxes">
-          <div class="rx-box">
-            <h4>RIGHT EYE (OD)</h4>
-            <table>
-              <tr><td><b>SPH:</b></td><td style="text-align:right">${inv.right_sphere ?? '-'}</td></tr>
-              <tr><td><b>CYL:</b></td><td style="text-align:right">${inv.right_cylinder ?? '-'}</td></tr>
-              <tr><td><b>AXIS:</b></td><td style="text-align:right">${inv.right_axis ?? '-'}</td></tr>
-              <tr><td><b>ADD:</b></td><td style="text-align:right">${inv.right_add ?? '-'}</td></tr>
-            </table>
-          </div>
-          <div class="rx-box">
-            <h4>LEFT EYE (OS)</h4>
-            <table>
-              <tr><td><b>SPH:</b></td><td style="text-align:right">${inv.left_sphere ?? '-'}</td></tr>
-              <tr><td><b>CYL:</b></td><td style="text-align:right">${inv.left_cylinder ?? '-'}</td></tr>
-              <tr><td><b>AXIS:</b></td><td style="text-align:right">${inv.left_axis ?? '-'}</td></tr>
-              <tr><td><b>ADD:</b></td><td style="text-align:right">${inv.left_add ?? '-'}</td></tr>
-            </table>
-          </div>
-        </div>
-        ${inv.eye_type ? `<p><b>Eye Type:</b> ${inv.eye_type}</p>` : ''}
-        ${inv.lens_type ? `<p><b>Lens Type:</b> ${inv.lens_type}</p>` : ''}
-        ${inv.ipd ? `<p><b>IPD:</b> ${inv.ipd}mm</p>` : ''}
-        ` : ''}
-
-        <h3 style="text-align:center;font-size:12pt;font-weight:bold">Items</h3>
-        <table class="items-table">
-          <thead><tr><th>Description</th><th style="text-align:center;width:15%">Qty</th><th style="text-align:right;width:20%">Price</th><th style="text-align:right;width:20%">Total</th></tr></thead>
-          <tbody>
-            ${items.map((i: any) => `
-              <tr><td>${i.description}</td><td style="text-align:center">${i.quantity}</td><td style="text-align:right">${formatCurrency(i.unit_price)}</td><td style="text-align:right">${formatCurrency(i.total_price)}</td></tr>
-            `).join('')}
-          </tbody>
-        </table>
-
-        <table class="summary">
-          <tr><td><b>Subtotal:</b></td><td style="text-align:right">${formatCurrency(inv.subtotal)}</td></tr>
-          ${Number(inv.discount) > 0 ? `<tr><td><b>Discount:</b></td><td style="text-align:right">-${formatCurrency(inv.discount)}</td></tr>` : ''}
-          <tr><td><b>Amount Paid:</b></td><td style="text-align:right;color:#2563eb">${formatCurrency(inv.amount_paid || 0)}</td></tr>
-          ${Number(inv.balance_due) > 0 ? `<tr><td><b>Balance Due:</b></td><td style="text-align:right;color:#dc2626">${formatCurrency(inv.balance_due)}</td></tr>` : ''}
-          <tr class="total-row"><td style="padding:6px"><b>TOTAL:</b></td><td style="text-align:right;font-size:12pt">${formatCurrency(inv.total_amount)}</td></tr>
-        </table>
-
-        <div class="words">Amount in words: ${numberToWords(Math.floor(inv.total_amount))} Saudi Riyals</div>
-
-        <div class="qr-footer">
-          <div class="qr-box" id="pdf-qr"></div>
-          <div class="thanks">
-            <p style="font-weight:bold">Thank you for shopping with us!</p>
-            <p style="font-weight:bold;direction:rtl">شكراً لتسوقك معنا!</p>
-          </div>
-        </div>
-      </div>
-
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-      <script>
-        setTimeout(function() {
-          new QRCode(document.getElementById('pdf-qr'), {
-            text: '${qrUrl}',
-            width: 150, height: 150,
-            colorDark: '#000', colorLight: '#fff',
-            correctLevel: QRCode.CorrectLevel.M
-          });
-          setTimeout(function() {
-            html2pdf().set({
-              margin: 10,
-              filename: 'Invoice_${inv.invoice_number}.pdf',
-              image: { type: 'jpeg', quality: 0.98 },
-              html2canvas: { scale: 3, useCORS: true, letterRendering: true },
-              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(document.getElementById('pdf-content')).save().then(function() {
-              setTimeout(function() { window.close(); }, 500);
-            });
-          }, 400);
-        }, 300);
-      </script>
-    </body></html>`)
-    pdfWin.document.close()
-    toast.success('PDF downloading...')
-  }
+  const handlePDF = () => renderA4Invoice(true)
 
   // ─── Print A4 Directly ───
-  const handlePrintA4 = () => {
+  const handlePrintA4 = () => renderA4Invoice(false)
+
+  const renderA4Invoice = (download: boolean) => {
     const win = window.open('', '', 'width=800,height=900')
     if (!win) return
 
-    win.document.write(`<!DOCTYPE html><html><head><title>Print A4</title><style>
-      @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css');
-      @page { size: A4; margin: 10mm; }
-      body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #fff; }
-      .pdf-content { width: 210mm; max-width: 210mm; padding: 10mm; margin: 0 auto; background: white; color: #000; font-size: 10pt; box-sizing: border-box; }
-      .hdr { text-align: center; margin-bottom: 8mm; border-bottom: 2px solid #1a1a2e; padding-bottom: 5mm; }
-      .hdr h1 { margin: 0; font-size: 18pt; font-weight: bold; color: #1a1a2e; }
-      .hdr .address { font-size: 9pt; color: #555; margin: 2mm 0; }
-      .title { text-align: center; font-size: 14pt; font-weight: bold; margin: 5mm 0; }
-      .cols { display: flex; justify-content: space-between; margin-bottom: 5mm; font-size: 10pt; }
-      .cols .left, .cols .right { width: 48%; }
-      .rx-boxes { display: flex; gap: 3mm; margin-bottom: 5mm; }
-      .rx-box { flex: 1; background: #f5f5f5; border: 1px solid #ccc; border-radius: 4px; padding: 6px; }
-      .rx-box h4 { margin: 0 0 3mm; font-size: 10pt; text-align: center; }
-      .rx-box table { width: 100%; font-size: 9pt; }
-      .rx-box td { padding: 1mm 0; }
-      .items-table { width: 100%; border-collapse: collapse; margin: 5mm 0; }
-      .items-table th { background: #f0f0f0; border-bottom: 2px solid #000; padding: 5px; text-align: left; }
-      .items-table td { padding: 5px; border-bottom: 1px solid #ddd; }
-      .summary { width: 100%; border-collapse: collapse; margin-bottom: 3mm; }
-      .summary td { padding: 3px; }
-      .summary .total-row { border: 2px solid #000; background: #f9f9f9; font-weight: bold; }
-      .words { text-align: center; margin: 5mm 0; font-weight: bold; font-size: 10pt; }
-      .qr-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10mm; }
-      .thanks { text-align: right; }
-    </style></head><body><div class="pdf-content">
-      <div class="hdr">
-        <h1>Safwan OPTICALS</h1>
-        <div class="address">Abdul Rahman Ibn Ahmed As Sidayri, As Salamah, Jeddah 23436</div>
-        <div class="address"><b>Phone:</b> +966 05 0918 3807  |  <b>VAT No:</b> 310158981300003</div>
+    const s = shop as ShopInfo
+    const isOptical = inv.right_sphere != null || inv.eye_type
+
+    const metaHtml = `<div class="meta">
+      <div class="col"><b>Invoice #</b> ${inv.invoice_number}<br><b>Customer</b> ${inv.customer_name || 'Walk-in'}<br>${inv.customer_phone ? `<b>Phone</b> ${inv.customer_phone}` : ''}</div>
+      <div class="col" style="text-align:right"><b>Date</b> ${date}<br><b>Status</b> <span style="color:${inv.payment_status==='paid'?'#16a34a':'#dc2626'};font-weight:700">${(inv.payment_status||'').toUpperCase()}</span><br>${inv.payment_method ? `<b>Method</b> ${inv.payment_method.toUpperCase()}` : ''}</div>
+    </div>`
+
+    const extraHtml = isOptical ? `
+      <div class="rx-grid">
+        <div class="rx-box od"><h4>RIGHT (OD)</h4>
+          <table><tr><td>SPH</td><td>${inv.right_sphere??'-'}</td></tr><tr><td>CYL</td><td>${inv.right_cylinder??'-'}</td></tr><tr><td>AXIS</td><td>${inv.right_axis??'-'}</td></tr><tr><td>ADD</td><td>${inv.right_add??'-'}</td></tr></table>
+        </div>
+        <div class="rx-box os"><h4>LEFT (OS)</h4>
+          <table><tr><td>SPH</td><td>${inv.left_sphere??'-'}</td></tr><tr><td>CYL</td><td>${inv.left_cylinder??'-'}</td></tr><tr><td>AXIS</td><td>${inv.left_axis??'-'}</td></tr><tr><td>ADD</td><td>${inv.left_add??'-'}</td></tr></table>
+        </div>
       </div>
-      <div class="title">INVOICE</div>
-      <div class="cols">
-        <div class="left"><p><b>Invoice #:</b> ${inv.invoice_number}</p><p><b>Customer:</b> ${inv.customer_name || 'Walk-in'}</p><p><b>Phone:</b> ${inv.customer_phone || '-'}</p></div>
-        <div class="right" style="text-align:right"><p><b>Date:</b> ${date}</p><p><b>Status:</b> ${(inv.payment_status || '').toUpperCase()}</p><p><b>Method:</b> ${inv.payment_method || '-'}</p></div>
-      </div>
-      ${(inv.right_sphere != null || inv.eye_type) ? `<h3 style="text-align:center;margin:4mm 0 2mm;font-size:12pt;font-weight:bold">OPTICAL MEASUREMENTS</h3>
-      <div class="rx-boxes">
-        <div class="rx-box"><h4>RIGHT EYE (OD)</h4><table><tr><td><b>SPH:</b></td><td style="text-align:right">${inv.right_sphere ?? '-'}</td></tr><tr><td><b>CYL:</b></td><td style="text-align:right">${inv.right_cylinder ?? '-'}</td></tr><tr><td><b>AXIS:</b></td><td style="text-align:right">${inv.right_axis ?? '-'}</td></tr><tr><td><b>ADD:</b></td><td style="text-align:right">${inv.right_add ?? '-'}</td></tr></table></div>
-        <div class="rx-box"><h4>LEFT EYE (OS)</h4><table><tr><td><b>SPH:</b></td><td style="text-align:right">${inv.left_sphere ?? '-'}</td></tr><tr><td><b>CYL:</b></td><td style="text-align:right">${inv.left_cylinder ?? '-'}</td></tr><tr><td><b>AXIS:</b></td><td style="text-align:right">${inv.left_axis ?? '-'}</td></tr><tr><td><b>ADD:</b></td><td style="text-align:right">${inv.left_add ?? '-'}</td></tr></table></div>
-      </div>${inv.eye_type ? `<p><b>Eye Type:</b> ${inv.eye_type}</p>` : ''}${inv.lens_type ? `<p><b>Lens Type:</b> ${inv.lens_type}</p>` : ''}${inv.ipd ? `<p><b>IPD:</b> ${inv.ipd}mm</p>` : ''}` : ''}
-      <h3 style="text-align:center;font-size:12pt;font-weight:bold">Items</h3>
-      <table class="items-table"><thead><tr><th>Description</th><th style="text-align:center;width:15%">Qty</th><th style="text-align:right;width:20%">Price</th><th style="text-align:right;width:20%">Total</th></tr></thead><tbody>${items.map((i: any) => `<tr><td>${i.description}</td><td style="text-align:center">${i.quantity}</td><td style="text-align:right">${formatCurrency(i.unit_price)}</td><td style="text-align:right">${formatCurrency(i.total_price)}</td></tr>`).join('')}</tbody></table>
-      <table class="summary"><tr><td><b>Subtotal:</b></td><td style="text-align:right">${formatCurrency(inv.subtotal)}</td></tr>${Number(inv.discount) > 0 ? `<tr><td><b>Discount:</b></td><td style="text-align:right">-${formatCurrency(inv.discount)}</td></tr>` : ''}<tr><td><b>Paid:</b></td><td style="text-align:right;color:#2563eb">${formatCurrency(inv.amount_paid || 0)}</td></tr>${Number(inv.balance_due) > 0 ? `<tr><td><b>Balance Due:</b></td><td style="text-align:right;color:#dc2626">${formatCurrency(inv.balance_due)}</td></tr>` : ''}<tr class="total-row"><td style="padding:6px"><b>TOTAL:</b></td><td style="text-align:right;font-size:12pt">${formatCurrency(inv.total_amount)}</td></tr></table>
-      <div class="words">Amount in words: ${numberToWords(Math.floor(inv.total_amount))} Saudi Riyals</div>
-      <div class="qr-footer"><div id="print-a4-qr"></div><div class="thanks"><p style="font-weight:bold">Thank you for shopping with us!</p><p style="font-weight:bold;direction:rtl">شكراً لتسوقك معنا!</p></div></div>
-      <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script>setTimeout(function(){new QRCode(document.getElementById('print-a4-qr'),{text:'${qrUrl}',width:150,height:150,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});setTimeout(function(){window.print();setTimeout(function(){window.close();},500);},400);},200);</script>
-    </div></body></html>`)
+      ${inv.eye_type ? `<div class="rx-extra"><b>Eye Type:</b> ${inv.eye_type}</div>` : ''}
+      ${inv.lens_type ? `<div class="rx-extra"><b>Lens Type:</b> ${inv.lens_type}</div>` : ''}
+      ${inv.ipd ? `<div class="rx-extra"><b>IPD:</b> ${inv.ipd} mm</div>` : ''}
+    ` : ''
+
+    const itemsHtml = `<table class="items">
+      <thead><tr><th>Description</th><th class="c" style="width:12%">Qty</th><th class="r" style="width:18%">Price</th><th class="r" style="width:20%">Total</th></tr></thead>
+      <tbody>${items.map((i:any) => `<tr><td>${i.description}</td><td class="c">${i.quantity}</td><td class="r">${formatCurrency(i.unit_price)}</td><td class="r">${formatCurrency(i.total_price)}</td></tr>`).join('')}</tbody>
+    </table>`
+
+    const qrHtml = `<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script>
+      setTimeout(function(){
+        var q=document.getElementById('a4-qr');q.style.width='42mm';q.style.height='42mm';
+        new QRCode(q,{text:'${qrUrl}',width:320,height:320,colorDark:'#1a1a2e',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.M});
+        setTimeout(function(){
+          ${download ? `
+          var tries=0;
+          var iv=setInterval(function(){
+            if(typeof html2canvas!=='undefined' && typeof jspdf!=='undefined'){
+              clearInterval(iv);
+              var el=document.querySelector('.page');
+              var w=el.offsetWidth, h=el.offsetHeight;
+              html2canvas(el,{scale:2,useCORS:true,scrollX:0,scrollY:0,width:w,height:h,windowWidth:w,logging:false}).then(function(canvas){
+                var pdf=new jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+                pdf.addImage(canvas.toDataURL('image/jpeg',0.98),'JPEG',0,0,210,297);
+                pdf.save('Invoice_${inv.invoice_number}.pdf');
+                setTimeout(function(){window.close()},500);
+              });
+            } else if(++tries>80){ clearInterval(iv); window.close(); }
+          },100);`
+          : `window.print();setTimeout(function(){window.close()},500);`
+        }},400);
+      },200);
+    </script>`
+
+    const barcodeNum = inv.invoice_number?.split('-').pop() || ''
+    const dateTime = new Date().toLocaleString('en-SA', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:true })
+
+    let html = generateA4Html({
+      shop: s,
+      type: 'invoice',
+      title: 'INVOICE',
+      metaHtml,
+      extraHtml,
+      itemsHtml,
+      totalsHtml: invoiceTotalsHtml(inv, formatCurrency),
+      wordsHtml: `<div class="words">Amount in words: ${numberToWords(Math.floor(inv.total_amount))} Saudi Riyals</div>`,
+      qrHtml,
+      footerHtml: '',
+      barcodeNum,
+      dateTime,
+    })
+
+    if (download) {
+      html = html.replace('</body>', '<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script></body>')
+    }
+
+    win.document.write(html)
     win.document.close()
+    if (download) toast.success('PDF downloading...')
   }
 
   return (

@@ -178,16 +178,14 @@ export async function fetchSettings(): Promise<Row | null> {
 }
 
 export async function saveSettings(settings: Row) {
-  const sb = getSupabase()
-  if (!sb) throw new Error('Supabase not configured')
-  const existing = await fetchSettings()
-  if (existing) {
-    const { error } = await sb.from('settings').update(settings as never).eq('id', existing.id as string)
-    if (error) throw error
-  } else {
-    const { error } = await sb.from('settings').insert(settings as never)
-    if (error) throw error
-  }
+  const res = await fetch('/api/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+  })
+  const data = await res.json()
+  if (!res.ok || data.error) throw new Error(data.error || 'Failed to save settings')
+  return data
 }
 
 export async function fetchSalesReport(startDate: string, endDate: string) {
@@ -216,24 +214,11 @@ export async function fetchSalesReport(startDate: string, endDate: string) {
   }
 }
 
-// Generate sequential invoice/receipt number
 export async function generateNextNumber(prefix: 'IN' | 'RE'): Promise<string> {
   const sb = getSupabase()
   if (!sb) return `${prefix}-${Date.now().toString().slice(-6)}`
-
-  const col = 'invoice_number'
-  const likePattern = `SA-${prefix}-%`
-
-  const { count, error } = await sb
-    .from('invoices')
-    .select('*', { count: 'exact', head: true })
-    .like(col, likePattern)
-
-  if (error) {
-    const fallback = Date.now().toString().slice(-6)
-    return `SA-${prefix}-${fallback}`
-  }
-
+  const { count, error } = await sb.from('invoices').select('*', { count: 'exact', head: true }).like('invoice_number', `SA-${prefix}-%`)
+  if (error) return `${prefix}-${Date.now().toString().slice(-6)}`
   const next = (count || 0) + 1
   return `SA-${prefix}-${String(next).padStart(4, '0')}`
 }

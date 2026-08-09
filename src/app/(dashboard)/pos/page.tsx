@@ -22,6 +22,7 @@ import { usePosStore } from '@/stores'
 import {
   useProducts, useSearchProducts, useCreateInvoice,
   useSearchCustomers, useCreateCustomer, useUpdateCustomer,
+  useShopSettings,
 } from '@/hooks/use-data'
 import { formatCurrency, numberToWords } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -50,6 +51,7 @@ export default function PosPage() {
   const { data: searchedProducts = [] } = useSearchProducts(searchQuery)
   const createInvoiceMutation = useCreateInvoice()
   const { t } = useLang()
+  const { data: shop } = useShopSettings()
   const {
     cart, addToCart, removeFromCart, updateQuantity,
     discount, setDiscount, clearCart, getCartTotal, getItemCount,
@@ -320,11 +322,14 @@ export default function PosPage() {
       .footer { text-align: center; font-size: 11px; margin-top: 3mm; }
     </style></head><body>
       <div class="header">
-        <h2>Safwan OPTICALS</h2>
-        <div>Abdur Rahman Ibn Ahmed As Sidayri, As Salamah, Jeddah 23436</div>
-        <div class="ar">عبد الرحمن بن أحمد السديري، السلامة، جدة</div>
+        ${shop?.logoUrl ? `<img src="${shop.logoUrl}" style="max-height:15mm;display:block;margin:0 auto 2mm" />` : ''}
+        ${shop?.arName ? `<h2 class="ar" style="direction:rtl;margin:0">${shop.arName}</h2>` : ''}
+        <h2 style="margin-top:${shop?.arName ? '2mm' : '0'}">${shop?.shopName || 'Safwan Opticals'}</h2>
+        <div>${shop?.address || 'Abdur Rahman Ibn Ahmed As Sidayri, As Salamah, Jeddah 23436'}</div>
       </div>
-      <div style="text-align:center;font-size:11px;margin:2mm 0">VAT No: 310158981300003</div>
+      <div style="text-align:center;font-size:11px;margin:2mm 0">
+        VAT: ${shop?.vat || '310158981300003'}${shop?.phone ? ` | Tel: ${shop.phone}` : ''}
+      </div>
       <div style="text-align:center;font-weight:bold;font-size:13px">Invoice No: ${invoiceNumber}</div>
       <div style="text-align:center;font-size:11px">Date: ${date}</div>
       <div class="divider"></div>

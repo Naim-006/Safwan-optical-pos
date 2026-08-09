@@ -269,6 +269,8 @@ export interface Database {
         Row: {
           id: string
           shop_name: string
+          ar_name: string | null
+          cr_number: string | null
           shop_address: string | null
           shop_phone: string | null
           shop_vat: string | null
@@ -284,6 +286,8 @@ export interface Database {
         Insert: {
           id?: string
           shop_name: string
+          ar_name?: string | null
+          cr_number?: string | null
           shop_address?: string | null
           shop_phone?: string | null
           shop_vat?: string | null
@@ -299,6 +303,8 @@ export interface Database {
         Update: {
           id?: string
           shop_name?: string
+          ar_name?: string | null
+          cr_number?: string | null
           shop_address?: string | null
           shop_phone?: string | null
           shop_vat?: string | null

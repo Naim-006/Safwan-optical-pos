@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Save, Store, Phone, Globe, FileText, Languages,
   Lock, Key, HardDrive, Download, Upload, Database,
@@ -13,6 +14,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
@@ -26,17 +28,18 @@ import {
 } from '@/components/ui/alert-dialog'
 import { settingsSchema, type SettingsInput } from '@/lib/validators'
 import {
-  useSettings, useSaveSettings, useProducts, useCustomers, useInvoices,
+  useShopSettings, useProducts, useCustomers, useInvoices,
 } from '@/hooks/use-data'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/contexts/lang-provider'
+import { uploadShopLogo } from '@/lib/storage'
 
 export default function SettingsPage() {
   const { lang, setLang, t } = useLang()
   const [resetOpen, setResetOpen] = useState(false)
+  const qc = useQueryClient()
 
-  const { data: existingSettings } = useSettings()
-  const saveMutation = useSaveSettings()
+  const { data: shop, isLoading: shopLoading } = useShopSettings()
   const { data: products = [] } = useProducts()
   const { data: customers = [] } = useCustomers()
   const { data: invoicesData } = useInvoices(1, 1000)
@@ -45,12 +48,24 @@ export default function SettingsPage() {
     try { return createClient() } catch { return null }
   }, [])
 
+  const [logoUrl, setLogoUrl] = useState('')
+  const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [savingShop, setSavingShop] = useState(false)
+  const [locked, setLocked] = useState(true)
+  const [verifyMode, setVerifyMode] = useState(false)
+  const [verifyInput, setVerifyInput] = useState('')
+  const [verifying, setVerifying] = useState(false)
+  const [maskedEmail, setMaskedEmail] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
+
   const {
-    register, handleSubmit, setValue,
+    register, handleSubmit, setValue, getValues, reset,
   } = useForm<any>({
     resolver: zodResolver(settingsSchema) as any,
     defaultValues: {
       shopName: 'Safwan Opticals',
+      arName: '',
+      crNumber: '',
       currency: 'SAR',
       language: 'en',
       shopAddress: '',
@@ -71,23 +86,63 @@ export default function SettingsPage() {
   })
 
   useEffect(() => {
-    if (existingSettings) {
-      const s = existingSettings as any
-      setValue('shopName', s.shop_name || 'Safwan Opticals')
-      setValue('shopAddress', s.shop_address || '')
-      setValue('shopPhone', s.shop_phone || '')
-      setValue('shopVat', s.shop_vat || '')
-      setValue('shopWebsite', s.shop_website || '')
-      setValue('receiptHeader', s.receipt_header || '')
-      setValue('receiptFooter', s.receipt_footer || '')
-      setValue('currency', s.currency || 'SAR')
-      setValue('language', s.language || 'en')
+    if (shop && !shopLoading) {
+      reset({
+        shopName: shop.shopName,
+        arName: shop.arName,
+        crNumber: shop.crNumber,
+        shopAddress: shop.address,
+        shopPhone: shop.phone,
+        shopVat: shop.vat,
+        shopWebsite: shop.website,
+        receiptHeader: shop.receiptHeader,
+        receiptFooter: shop.receiptFooter,
+        currency: shop.currency,
+        language: lang,
+      })
+      if (shop.logoUrl) setLogoUrl(shop.logoUrl)
     }
-  }, [existingSettings, setValue])
+  }, [shop, shopLoading, lang, reset])
 
-  const onShopSubmit = (data: any) => {
-    saveMutation.mutate({
+  const requestVerification = async () => {
+    setVerifying(true)
+    try {
+      const res = await fetch('/api/settings/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
+      const data = await res.json()
+      if (data.success) {
+        setMaskedEmail(data.maskedEmail)
+        setVerifyMode(true)
+        toast.success(data.message)
+      } else {
+        toast.error(data.error || 'Failed')
+      }
+    } catch { toast.error('Failed to send verification') }
+    setVerifying(false)
+  }
+
+  const submitVerification = async () => {
+    if (!verifyInput) return
+    const res = await fetch('/api/settings/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'verify', code: verifyInput }),
+    })
+    const data = await res.json()
+    if (data.success) {
+      setLocked(false)
+      setVerifyMode(false)
+      setVerifyInput('')
+      toast.success('Settings unlocked')
+    } else {
+      toast.error('Invalid code. Try again.')
+    }
+  }
+
+  const onShopSubmit = async (data: any) => {
+    const payload = {
       shop_name: data.shopName,
+      ar_name: data.arName || null,
+      cr_number: data.crNumber || null,
       shop_address: data.shopAddress || null,
       shop_phone: data.shopPhone || null,
       shop_vat: data.shopVat || null,
@@ -96,7 +151,62 @@ export default function SettingsPage() {
       receipt_footer: data.receiptFooter || null,
       currency: data.currency,
       language: data.language || lang,
-    })
+      logo_url: logoUrl || null,
+    }
+
+    // Save via API
+    setSavingShop(true)
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const result = await res.json()
+      if (!res.ok || result.error) {
+        toast.error(result.error || 'Failed to save')
+        return
+      }
+
+      // Immediately update query cache so all components see new data
+      qc.setQueryData(['settings'], {
+        id: (shop as any)?.id,
+        shop_name: payload.shop_name,
+        ar_name: payload.ar_name,
+        cr_number: payload.cr_number,
+        shop_address: payload.shop_address,
+        shop_phone: payload.shop_phone,
+        shop_vat: payload.shop_vat,
+        shop_website: payload.shop_website,
+        receipt_header: payload.receipt_header,
+        receipt_footer: payload.receipt_footer,
+        currency: payload.currency,
+        language: payload.language,
+        logo_url: payload.logo_url,
+      })
+
+      toast.success('Settings saved')
+      setLocked(true) // Re-lock after save
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save')
+    } finally {
+      setSavingShop(false)
+    }
+  }
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingLogo(true)
+    try {
+      const url = await uploadShopLogo(file)
+      setLogoUrl(url)
+      toast.success('Logo uploaded')
+    } catch (err: any) {
+      toast.error(err.message || 'Upload failed')
+    } finally {
+      setUploadingLogo(false)
+    }
   }
 
   const onChangePassword = async (data: any) => {
@@ -117,7 +227,11 @@ export default function SettingsPage() {
   const changeLanguage = (l: 'en' | 'ar') => {
     setLang(l)
     setValue('language', l)
-    saveMutation.mutate({ shop_name: 'Safwan Opticals', language: l })
+    fetch('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ shop_name: 'Safwan Opticals', language: l }),
+    }).catch(() => {})
   }
 
   const handleExportAll = () => {
@@ -170,56 +284,122 @@ export default function SettingsPage() {
         {/* Shop Tab */}
         <TabsContent value="shop">
           <form onSubmit={handleSubmit(onShopSubmit)} className="space-y-6">
-            <Card className="border-t-2 border-t-blue-500">
-              <CardHeader>
-                <CardTitle>Shop Information</CardTitle>
-                <CardDescription>Your business details shown on invoices and receipts</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Shop Name</Label>
-                  <Input {...register('shopName')} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Address</Label>
-                  <Textarea rows={2} {...register('shopAddress')} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Phone</Label>
-                    <Input {...register('shopPhone')} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>VAT Number</Label>
-                    <Input {...register('shopVat')} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Website</Label>
-                  <Input {...register('shopWebsite')} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Currency</Label>
-                  <Select onValueChange={(v) => v && setValue('currency', v)}>
-                    <SelectTrigger><SelectValue placeholder="SAR" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SAR">SAR - Saudi Riyal</SelectItem>
-                      <SelectItem value="USD">USD - US Dollar</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  <Label>Receipt Header</Label>
-                  <Textarea rows={2} {...register('receiptHeader')} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Receipt Footer</Label>
-                  <Textarea rows={2} {...register('receiptFooter')} />
-                </div>
-                <Button type="submit" disabled={saveMutation.isPending}>
-                  <Save className="h-4 w-4 mr-2" /> Save Shop Settings
-                </Button>
+             <Card className="border-t-2 border-t-blue-500">
+               <CardHeader>
+                 <div className="flex items-center justify-between">
+                   <div>
+                     <CardTitle>Shop Information</CardTitle>
+                     <CardDescription>Your business details shown on invoices and receipts</CardDescription>
+                   </div>
+                   {locked ? (
+                     <Button type="button" variant="outline" size="sm" onClick={requestVerification} disabled={verifying} className="border-amber-300 text-amber-600 hover:bg-amber-50">
+                       {verifying ? 'Sending...' : 'Unlock to Edit'}
+                     </Button>
+                   ) : (
+                     <div className="flex items-center gap-2">
+                       <Badge className="bg-green-100 text-green-700 border-green-300 text-[10px]">Unlocked</Badge>
+                       <Button type="button" variant="ghost" size="sm" onClick={() => setLocked(true)} className="text-xs">Lock</Button>
+                     </div>
+                   )}
+                 </div>
+               </CardHeader>
+               <CardContent className="space-y-4">
+                 {/* Verification dialog */}
+                 {verifyMode && (
+                   <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 space-y-3">
+                     <p className="text-sm font-medium">Verification Required</p>
+                     <p className="text-xs text-muted-foreground">A verification code has been sent to {maskedEmail}</p>
+                     <div className="flex gap-2">
+                       <Input
+                         placeholder="Enter 6-digit code"
+                         value={verifyInput}
+                         onChange={(e) => setVerifyInput(e.target.value)}
+                         className="h-9 text-center text-lg tracking-widest"
+                         maxLength={6}
+                         onKeyDown={(e) => e.key === 'Enter' && submitVerification()}
+                       />
+                       <Button type="button" size="sm" onClick={submitVerification}>Verify</Button>
+                       <Button type="button" variant="ghost" size="sm" onClick={() => { setVerifyMode(false); setVerifyInput('') }}>Cancel</Button>
+                     </div>
+                   </div>
+                 )}
+
+                 {/* Logo Upload */}
+                 <div className="space-y-2">
+                   <Label>Shop Logo / Icon</Label>
+                   <div className="flex items-center gap-4">
+                     {logoUrl ? (
+                       <img src={logoUrl} alt="Logo" className="h-16 w-16 rounded-lg object-cover border" />
+                     ) : (
+                       <div className="h-16 w-16 rounded-lg border-2 border-dashed flex items-center justify-center text-muted-foreground text-xs">No Logo</div>
+                     )}
+                     <div className="space-y-1">
+                       <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploadingLogo || locked}>
+                         {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
+                       </Button>
+                       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={locked} />
+                       <p className="text-xs text-muted-foreground">PNG or JPG, recommended 200x200</p>
+                     </div>
+                   </div>
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                     <Label>Shop Name (English)</Label>
+                     <Input {...register('shopName')} disabled={locked} />
+                   </div>
+                   <div className="space-y-2">
+                     <Label>Shop Name (Arabic)</Label>
+                     <Input {...register('arName')} dir="rtl" disabled={locked} />
+                   </div>
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                     <Label>CR Number</Label>
+                     <Input {...register('crNumber')} disabled={locked} />
+                   </div>
+                   <div className="space-y-2">
+                     <Label>VAT Number</Label>
+                     <Input {...register('shopVat')} disabled={locked} />
+                   </div>
+                 </div>
+
+                 <div className="space-y-2">
+                   <Label>Address</Label>
+                   <Textarea rows={2} {...register('shopAddress')} disabled={locked} />
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                     <Label>Phone</Label>
+                     <Input {...register('shopPhone')} disabled={locked} />
+                   </div>
+                   <div className="space-y-2">
+                     <Label>Website</Label>
+                     <Input {...register('shopWebsite')} disabled={locked} />
+                   </div>
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                     <Label>Currency</Label>
+                     <Select disabled={locked} onValueChange={(v) => v && setValue('currency', v)}>
+                       <SelectTrigger><SelectValue /></SelectTrigger>
+                       <SelectContent><SelectItem value="SAR">SAR</SelectItem><SelectItem value="USD">USD</SelectItem></SelectContent>
+                     </Select>
+                   </div>
+                 </div>
+                 <Separator />
+                 <div className="space-y-2">
+                   <Label>Receipt Header</Label>
+                   <Textarea rows={2} {...register('receiptHeader')} disabled={locked} />
+                 </div>
+                 <div className="space-y-2">
+                   <Label>Receipt Footer</Label>
+                   <Textarea rows={2} {...register('receiptFooter')} disabled={locked} />
+                 </div>
+                 <Button type="submit" disabled={savingShop || locked}>
+                   <Save className="h-4 w-4 mr-2" /> Save Shop Settings
+                 </Button>
               </CardContent>
             </Card>
           </form>

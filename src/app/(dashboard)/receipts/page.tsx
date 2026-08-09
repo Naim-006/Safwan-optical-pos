@@ -2,11 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Receipt, Plus, Eye, Trash2 } from 'lucide-react'
+import { Receipt, Plus, Eye, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -17,6 +16,7 @@ import {
 import { useInvoices, useDeleteInvoice } from '@/hooks/use-data'
 import { formatCurrency } from '@/lib/utils'
 import { useLang } from '@/contexts/lang-provider'
+import { BarcodeSearch } from '@/components/barcode-search'
 
 export default function ReceiptsPage() {
   const router = useRouter()
@@ -52,10 +52,12 @@ export default function ReceiptsPage() {
       </div>
       <Card>
         <CardHeader className="pb-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Search by receipt # or customer..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
-          </div>
+          <BarcodeSearch
+            value={search}
+            onChange={setSearch}
+            placeholder="Search by receipt #, customer or scan barcode..."
+            onScan={(val) => setSearch(val)}
+          />
         </CardHeader>
         <CardContent>
           {isLoading ? (

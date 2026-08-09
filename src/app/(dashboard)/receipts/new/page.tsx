@@ -14,11 +14,12 @@ import { Separator } from '@/components/ui/separator'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { useSearchCustomers, useCreateInvoice } from '@/hooks/use-data'
+import { useSearchCustomers, useCreateInvoice, useShopSettings } from '@/hooks/use-data'
 import { formatCurrency, numberToWords } from '@/lib/utils'
 import { generateNextNumber } from '@/lib/supabase/data'
 import { createClient } from '@/lib/supabase/client'
 import { useLang } from '@/contexts/lang-provider'
+import { shopHeaderReceipt } from '@/lib/shop-template'
 
 const PUBLIC_URL = 'https://safwanoptical-view.vercel.app'
 
@@ -43,6 +44,7 @@ export default function NewReceiptPage() {
   const [payMethod, setPayMethod] = useState('cash')
 
   const { data: customers = [] } = useSearchCustomers(customerSearch)
+  const { data: shop } = useShopSettings()
   const createInvoiceMutation = useCreateInvoice()
 
   useEffect(() => {
@@ -150,13 +152,7 @@ export default function NewReceiptPage() {
       .qr { text-align: center; margin: 3mm 0; }
       .qr img { width: 25mm; height: 25mm; }
     </style></head><body>
-      <div class="header">
-        <div class="en">Safwan OPTICALS</div>
-        <div>Abdul Rahman Ibn Ahmad As Sidayri, As Salamah, Jeddah 23436</div>
-        <div class="ar">صفوان للبصريات - عبد الرحمن بن أحمد السديري، السلامة، جدة</div>
-      </div>
-      <div style="text-align:center;font-size:10px">VAT NO: 310158981300003</div>
-      <div class="divider"></div>
+      ${shopHeaderReceipt(shop)}
       <div class="title">Receipt Voucher / سند قبض</div>
       <table class="info-table">
         <tr><td class="label">Date / التاريخ</td><td>:</td><td>${date}</td></tr>
@@ -195,8 +191,8 @@ export default function NewReceiptPage() {
         <div class="sig-box"><div class="sig-line"></div><div>Signature / التوقيع</div></div>
       </div>
       <div class="footer">
-        <div>Kingdom of Saudi Arabia - Jeddah 23436 | 310158981300003</div>
-        <div>Tel: +966 05 0918 3807</div>
+        <div>Kingdom of Saudi Arabia - Jeddah 23436 | ${shop?.vat || '310158981300003'}</div>
+        <div>Tel: ${shop?.phone || '+966 05 0918 3807'}</div>
       </div>
       <div class="qr" id="rec-qr"></div>
       <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>

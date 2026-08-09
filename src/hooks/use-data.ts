@@ -210,12 +210,53 @@ export function useSettings() {
   }) as unknown as { data: Record<string, any> | null; isLoading: boolean }
 }
 
+export function useShopSettings() {
+  return useQuery({
+    queryKey: ['settings'],
+    queryFn: fetchSettings,
+    select: (data) => {
+      const s = (data as any) || {}
+      return {
+        shopName: s.shop_name || 'Safwan Opticals',
+        arName: s.ar_name || '',
+        address: s.shop_address || '',
+        phone: s.shop_phone || '',
+        vat: s.shop_vat || '',
+        website: s.shop_website || '',
+        logoUrl: s.logo_url || '',
+        crNumber: s.cr_number || '',
+        receiptHeader: s.receipt_header || '',
+        receiptFooter: s.receipt_footer || '',
+        currency: s.currency || 'SAR',
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  }) as unknown as { data: ReturnType<typeof getDefaultShop>; isLoading: boolean }
+}
+
+function getDefaultShop() {
+  return {
+    shopName: 'Safwan Opticals',
+    arName: '',
+    address: 'Abdul Rahman Ibn Ahmad As Sidayri, As Salamah, Jeddah 23436',
+    phone: '+966 05 0918 3807',
+    vat: '310158981300003',
+    website: '',
+    logoUrl: '',
+    crNumber: '',
+    receiptHeader: '',
+    receiptFooter: '',
+    currency: 'SAR',
+  }
+}
+
 export function useSaveSettings() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: saveSettings,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['settings'] })
+      qc.refetchQueries({ queryKey: ['settings'] })
       toast.success('Settings saved')
     },
     onError: (err: Error) => toast.error(err.message),
