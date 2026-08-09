@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Safwan Opticals — Invoice</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .top-bar { display:flex; justify-content:flex-end; gap:8px; padding:10px 0; flex-wrap:wrap; }
+    .top-bar button { padding:6px 14px; border-radius:6px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:0.78rem; font-weight:600; cursor:pointer; font-family:inherit; }
+    .top-bar button:hover { border-color:var(--accent); color:var(--accent); }
+    .top-bar button.accent { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .top-bar button.accent:hover { opacity:0.9; }
+    .home-link { color:var(--muted); font-size:0.75rem; text-decoration:none; }
+    .home-link:hover { color:var(--accent); }
+    .verify-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; justify-content:center; align-items:center; }
+    .verify-overlay.show { display:flex; }
+    .verify-popup { background:var(--surface); border-radius:12px; padding:2rem; max-width:420px; width:90%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.15); }
+    .verify-seal { width:80px; height:80px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:2rem; font-weight:800; }
+    .verify-popup h3 { font-size:1.1rem; margin-bottom:4px; }
+    .verify-popup .sub { font-size:0.82rem; color:var(--muted); margin-bottom:1rem; }
+    .verify-info { font-size:0.82rem; color:var(--muted); line-height:1.7; margin-bottom:1rem; }
+    .verify-info b { color:var(--text); }
+    .verify-popup button { padding:8px 20px; border-radius:6px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:0.82rem; cursor:pointer; font-family:inherit; }
+    .verify-popup button:hover { background:var(--bg); }
+    @media print { .top-bar { display:none !important; } }
+  </style>
+  <script type="module" crossorigin src="/assets/view-BoKzRa7y.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/style-pB53ce2g.js">
+  <link rel="stylesheet" crossorigin href="/assets/style-B1KIGsxs.css">
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar" id="topbar" style="display:none">
+      <a href="/" class="home-link">&#8592; Home</a>
+      <button onclick="handlePrint()">Print</button>
+      <button onclick="downloadPDF()" class="accent">Download PDF</button>
+      <button onclick="showVerify()">Verify Shop</button>
+    </div>
+
+    <div id="loading" class="loading"><div class="spinner"></div><p>Loading document details...</p></div>
+    <div id="error" class="error-msg" style="display:none"><h2>Document Not Found</h2><p id="error-text"></p><a href="/" class="btn">Back to Home</a></div>
+    <div id="invoice-container"></div>
+
+    <!-- Verify overlay -->
+    <div class="verify-overlay" id="verifyOverlay" onclick="if(event.target===this)hideVerify()">
+      <div class="verify-popup">
+        <div class="verify-seal">SV</div>
+        <h3 id="verify-title">Verified Authentic Document</h3>
+        <p class="sub" id="verify-sub"></p>
+        <div class="verify-info" id="verify-info"></div>
+        <button onclick="hideVerify()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+</body>
+</html>

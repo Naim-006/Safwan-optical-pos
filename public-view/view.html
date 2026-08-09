@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invoice — Safwan Opticals</title>
+  <title>Safwan Opticals — Invoice</title>
   <link rel="stylesheet" href="/src/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,9 +15,6 @@
     .top-bar button.accent:hover { opacity:0.9; }
     .home-link { color:var(--muted); font-size:0.75rem; text-decoration:none; }
     .home-link:hover { color:var(--accent); }
-    .bi-label { display:flex; justify-content:space-between; }
-    .bi-label .en {  }
-    .bi-label .ar { direction:rtl; color:var(--muted); font-size:0.9em; }
     .verify-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; justify-content:center; align-items:center; }
     .verify-overlay.show { display:flex; }
     .verify-popup { background:var(--surface); border-radius:12px; padding:2rem; max-width:420px; width:90%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.15); }
@@ -40,24 +37,17 @@
       <button onclick="showVerify()">Verify Shop</button>
     </div>
 
-    <div id="loading" class="loading"><div class="spinner"></div><p>Loading invoice details...</p></div>
-    <div id="error" class="error-msg" style="display:none"><h2>Invoice Not Found</h2><p id="error-text"></p><a href="/" class="btn">Back to Home</a></div>
+    <div id="loading" class="loading"><div class="spinner"></div><p>Loading document details...</p></div>
+    <div id="error" class="error-msg" style="display:none"><h2>Document Not Found</h2><p id="error-text"></p><a href="/" class="btn">Back to Home</a></div>
     <div id="invoice-container"></div>
 
     <!-- Verify overlay -->
     <div class="verify-overlay" id="verifyOverlay" onclick="if(event.target===this)hideVerify()">
       <div class="verify-popup">
         <div class="verify-seal">SV</div>
-        <h3>Verified Authentic Invoice</h3>
-        <p class="sub">Safwan Opticals &mdash; Jeddah, Saudi Arabia</p>
-        <div class="verify-info">
-          <b>CR:</b> 7037695090 &middot; <b>VAT:</b> 310158981300003<br>
-          <b>Address:</b> Abdul Rahman Ibn Ahmad As Sidayri, As Salamah, Jeddah 23436<br>
-          <b>Phone:</b> +966 05 0918 3807<br><br>
-          <span style="direction:rtl;display:inline-block">صفوان للبصريات — جدة، المملكة العربية السعودية</span><br>
-          <span style="color:var(--green);font-weight:600">&#10003; This document is cryptographically verified</span><br>
-          <span style="color:var(--green);font-weight:600">&#10003; تم التحقق من صحة هذه الوثيقة رقمياً</span>
-        </div>
+        <h3 id="verify-title">Verified Authentic Document</h3>
+        <p class="sub" id="verify-sub"></p>
+        <div class="verify-info" id="verify-info"></div>
         <button onclick="hideVerify()">Close</button>
       </div>
     </div>
@@ -65,6 +55,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script type="module">
     import { getSupabase, formatCurrency, numberToWords, formatDate } from '/src/utils.js'
 
@@ -78,12 +70,17 @@
     window.handlePrint = () => window.print()
 
     window.downloadPDF = function() {
-      const el = document.getElementById('invoice-container')
+      const el = document.querySelector('.page')
+      if (!el) return
+      const w = el.offsetWidth, h = el.offsetHeight
+      const fn = (invoiceData && invoiceData.invoice && invoiceData.invoice.invoice_number)
+        ? (invoiceData.invoice.invoice_number + '.pdf') : 'Document.pdf'
       html2pdf().set({
-        margin: 10,
-        filename: 'Invoice.pdf',
+        margin: 0,
+        filename: fn,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
+        enableLinks: false,
+        html2canvas: { scale: 2, useCORS: true, scrollX: 0, scrollY: 0, width: w, height: h, windowWidth: 794, logging: false },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       }).from(el).save()
     }
@@ -94,7 +91,7 @@
       rec: ['Receipt #', 'رقم الإيصال'],
       date: ['Date', 'التاريخ'], customer: ['Customer', 'العميل'],
       phone: ['Phone', 'الهاتف'], method: ['Method', 'الطريقة'],
-      status: ['Status', 'الحالة'], walkIn: ['Walk-in', 'عابر'],
+      status: ['Status', 'الحالة'],
       paid: ['PAID', 'مدفوع'], partial: ['PARTIAL', 'جزئي'], unpaid: ['UNPAID', 'غير مدفوع'],
       prescription: ['Optical Prescription', 'الوصفة البصرية'],
       eyeType: ['Eye Type', 'نوع العين'], lensType: ['Lens Type', 'نوع العدسة'],
@@ -105,106 +102,147 @@
       total: ['Total', 'الإجمالي'], amount: ['Amount', 'المبلغ'],
       amountPaid: ['Paid', 'المدفوع'], balance: ['Balance Due', 'المبلغ المتبقي'],
       words: ['Saudi Riyals', 'ريال سعودي'],
-      footer: ['Verified digitally | Safwan Opticals', 'تم التحقق رقمياً | صفوان للبصريات'],
-      noDetails: ['No details', 'لا توجد تفاصيل'],
       notes: ['Notes', 'ملاحظات'],
       invoice: ['Invoice', 'فاتورة'], receipt: ['Receipt Voucher', 'سند قبض'],
     }
 
-    function bl(key) {
-      const p = L[key]
-      return p ? '<span class="en">' + p[0] + '</span><span class="ar">' + p[1] + '</span>' : key
-    }
-    function blv(val) { return '<span class="en">' + val + '</span>' }
-    function blLabel(key) {
-      const p = L[key]
-      return p ? '<span class="en">' + p[0] + '</span><span class="ar">' + p[1] + '</span>' : key
-    }
+    function bi(key) { const p = L[key]; return p ? p[0] + '<span class="ar">' + p[1] + '</span>' : key }
+    function ar(v) { return '<span class="ar">' + v + '</span>' }
 
     if (!sb) showError('System unavailable')
-    else if (!id) showError('No invoice ID provided')
+    else if (!id) showError('No document ID provided')
     else loadInvoice(id)
 
     async function loadInvoice(id) {
       const { data: invoice, error } = await sb.from('invoices').select('*').eq('id', id).single()
-      if (error) { showError('Invoice not found'); return }
-      if (!invoice) { showError('Invoice not found'); return }
+      if (error || !invoice) { showError('Document not found'); return }
       const { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', id)
-      let shopName = 'Safwan Opticals'
-      try { const { data: s } = await sb.from('settings').select('*').limit(1).single(); if (s) shopName = s.shop_name || shopName } catch {}
-      invoiceData = { invoice, items: items || [], shopName }
+      const { data: settings } = await sb.from('settings').select('*').limit(1).single()
+      const s = settings || {}
+      const shop = {
+        name: s.shop_name || 'Safwan Opticals',
+        arName: s.ar_name || 'صفوان للبصريات',
+        address: s.shop_address || 'Abdul Rahman Ibn Ahmad As Sidayri, As Salamah, Jeddah 23436',
+        phone: s.shop_phone || '+966 05 0918 3807',
+        vat: s.shop_vat || '310158981300003',
+        cr: s.cr_number || '',
+        website: s.shop_website || '',
+        logo: s.logo_url || '',
+        receiptHeader: s.receipt_header || '',
+        receiptFooter: s.receipt_footer || '',
+      }
+      invoiceData = { invoice, items: items || [], shop }
       document.getElementById('topbar').style.display = 'flex'
-      document.title = (invoice.invoice_type === 'receipt' ? 'Receipt' : 'Invoice') + ' ' + invoice.invoice_number + ' — Safwan Opticals'
-      render(invoice, items || [], shopName)
+      document.title = (invoice.invoice_type === 'receipt' ? 'Receipt' : 'Invoice') + ' ' + invoice.invoice_number + ' — ' + shop.name
+      render(invoice, items || [], shop)
     }
 
-    function render(inv, items, shopName) {
+    function render(inv, items, shop) {
       const isReceipt = inv.invoice_type === 'receipt'
       const isOptical = inv.right_sphere != null
       const c = document.getElementById('invoice-container')
-      let h = '<div class="card">'
+      const qrUrl = window.location.href
+      const barcodeNum = (inv.invoice_number || '').split('-').pop() || ''
+      const statusColor = inv.payment_status === 'paid' ? '#16a34a' : inv.payment_status === 'partial' ? '#d97706' : '#dc2626'
 
+      let h = '<div class="page">'
+
+      // ─── Header: barcode+website | logo+vat | arabic→english→address→tel ───
       h += '<div class="hdr">'
-      h += '<div class="sname">' + shopName + '</div>'
-      h += '<div class="name-ar">صفوان للبصريات</div>'
-      h += '<div class="addr">Abdul Rahman Ibn Ahmad As Sidayri, As Salamah, Jeddah 23436</div>'
-      h += '<div class="addr-ar">عبد الرحمن بن أحمد السديري، السلامة، جدة ٢٣٤٣٦</div>'
-      h += '<div class="meta">VAT: 310158981300003 | Tel: +966 05 0918 3807</div></div>'
-
-      h += '<div class="status">'
-      h += '<span class="type"><span class="en">'+(isReceipt?'Receipt Voucher':'Invoice')+'</span><span class="ar">'+(isReceipt?'سند قبض':'فاتورة')+'</span></span>'
-      h += '<span class="badge '+inv.payment_status+'"><span class="en">'+inv.payment_status.toUpperCase()+'</span><span class="ar">'+(inv.payment_status==='paid'?'مدفوع':inv.payment_status==='partial'?'جزئي':'غير مدفوع')+'</span></span>'
+      h += '<div class="hdr-left">'
+      h += '<canvas id="barcode-canvas"></canvas>'
+      if (shop.website) h += '<div class="web">' + shop.website + '</div>'
+      h += '</div>'
+      h += '<div class="hdr-center">'
+      if (shop.logo) h += '<img src="' + shop.logo + '" class="logo-img" />'
+      h += '<div class="vat">VAT: ' + shop.vat + '</div>'
+      h += '</div>'
+      h += '<div class="hdr-right">'
+      if (shop.arName) h += '<div class="ar-name">' + shop.arName + '</div>'
+      h += '<div class="en-name">' + shop.name + '</div>'
+      h += '<div class="info">' + shop.address + '<br>Tel: ' + shop.phone + '</div>'
+      h += '</div>'
       h += '</div>'
 
-      h += '<div class="grid2">'
-      h += '<div class="gi"><span class="lbl">'+bl('inv')+'</span><span class="val">'+inv.invoice_number+'</span></div>'
-      h += '<div class="gi"><span class="lbl">'+bl('date')+'</span><span class="val">'+formatDate(inv.created_at)+'</span></div>'
-      h += '<div class="gi"><span class="lbl">'+bl('customer')+'</span><span class="val">'+(inv.customer_name||'Walk-in / عابر')+'</span></div>'
-      if (inv.customer_phone) h += '<div class="gi"><span class="lbl">'+bl('phone')+'</span><span class="val">'+inv.customer_phone+'</span></div>'
-      if (inv.payment_method) h += '<div class="gi"><span class="lbl">'+bl('method')+'</span><span class="val">'+inv.payment_method.toUpperCase()+'</span></div>'
-      h += '<div class="gi"><span class="lbl">'+bl('status')+'</span><span class="val" style="color:'+(inv.payment_status==='paid'?'var(--green)':'var(--red)')+'"><span class="en">'+inv.payment_status.toUpperCase()+'</span><span class="ar">'+(inv.payment_status==='paid'?'مدفوع':inv.payment_status==='partial'?'جزئي':'غير مدفوع')+'</span></span></div>'
+      // ─── Doc title ───
+      h += '<div class="doc-title">' + (isReceipt ? 'RECEIPT VOUCHER / سند قبض' : 'INVOICE / فاتورة') + '</div>'
+
+      // ─── Meta ───
+      h += '<div class="meta">'
+      h += '<div class="col"><b>' + bi(isReceipt ? 'rec' : 'inv') + '</b> ' + inv.invoice_number + '<br><b>' + bi('customer') + '</b> ' + (inv.customer_name || 'Walk-in') + (inv.customer_phone ? '<br><b>' + bi('phone') + '</b> ' + inv.customer_phone : '') + '</div>'
+      h += '<div class="col" style="text-align:right"><b>' + bi('date') + '</b> ' + formatDate(inv.created_at) + '<br><b>' + bi('status') + '</b> <span style="color:' + statusColor + ';font-weight:700">' + inv.payment_status.toUpperCase() + '</span>' + (inv.payment_method ? '<br><b>' + bi('method') + '</b> ' + inv.payment_method.toUpperCase() : '') + '</div>'
       h += '</div>'
 
+      // ─── Prescription ───
       if (isOptical) {
-        h += '<div class="sec"><h4>'+bl('prescription')+'</h4><div class="rx">'
-        if (inv.eye_type) h += '<div class="rxr"><b class="en">Eye Type:</b><b class="ar">نوع العين:</b> '+inv.eye_type+'</div>'
-        if (inv.lens_type) h += '<div class="rxr"><b class="en">Lens Type:</b><b class="ar">نوع العدسة:</b> '+inv.lens_type+'</div>'
-        h += '<table class="rxt"><thead><tr><th></th><th>SPH</th><th>CYL</th><th>AXIS</th><th>ADD</th></tr></thead><tbody>'
-        h += '<tr class="od"><td><b>'+bl('od')+'</b></td><td>'+(inv.right_sphere??'-')+'</td><td>'+(inv.right_cylinder??'-')+'</td><td>'+(inv.right_axis??'-')+'</td><td>'+(inv.right_add??'-')+'</td></tr>'
-        h += '<tr class="os"><td><b>'+bl('os')+'</b></td><td>'+(inv.left_sphere??'-')+'</td><td>'+(inv.left_cylinder??'-')+'</td><td>'+(inv.left_axis??'-')+'</td><td>'+(inv.left_add??'-')+'</td></tr>'
-        h += '</tbody></table>'
-        if (inv.ipd) h += '<div class="rxr" style="font-weight:600;margin-top:8px">'+bl('ipd')+': '+inv.ipd+' mm</div>'
-        h += '</div></div>'
+        h += '<div class="rx-grid">'
+        h += '<div class="rx-box od"><h4>RIGHT (OD)</h4><table><tr><td>SPH</td><td>' + (inv.right_sphere ?? '-') + '</td></tr><tr><td>CYL</td><td>' + (inv.right_cylinder ?? '-') + '</td></tr><tr><td>AXIS</td><td>' + (inv.right_axis ?? '-') + '</td></tr><tr><td>ADD</td><td>' + (inv.right_add ?? '-') + '</td></tr></table></div>'
+        h += '<div class="rx-box os"><h4>LEFT (OS)</h4><table><tr><td>SPH</td><td>' + (inv.left_sphere ?? '-') + '</td></tr><tr><td>CYL</td><td>' + (inv.left_cylinder ?? '-') + '</td></tr><tr><td>AXIS</td><td>' + (inv.left_axis ?? '-') + '</td></tr><tr><td>ADD</td><td>' + (inv.left_add ?? '-') + '</td></tr></table></div>'
+        h += '</div>'
+        if (inv.eye_type) h += '<div class="rx-extra"><b>' + bi('eyeType') + ':</b> ' + inv.eye_type + '</div>'
+        if (inv.lens_type) h += '<div class="rx-extra"><b>' + bi('lensType') + ':</b> ' + inv.lens_type + '</div>'
+        if (inv.ipd) h += '<div class="rx-extra"><b>' + bi('ipd') + ':</b> ' + inv.ipd + ' mm</div>'
       }
 
-      h += '<div class="sec"><h4>'+bl(isReceipt?'details':'items')+'</h4>'
+      // ─── Items ───
       if (items.length > 0) {
-        h += '<table class="items"><thead><tr><th>Description / الوصف</th><th>Qty / الكمية</th><th>Price / السعر</th><th>Total / الإجمالي</th></tr></thead><tbody>'
-        items.forEach(i => { h += '<tr><td>'+i.description+'</td><td class="c">'+i.quantity+'</td><td class="r">'+formatCurrency(i.unit_price)+'</td><td class="r">'+formatCurrency(i.total_price)+'</td></tr>' })
+        h += '<div class="section-label">' + (isReceipt ? 'Details / التفاصيل' : 'Items / العناصر') + '</div>'
+        h += '<table class="items"><thead><tr><th>Description / الوصف</th><th class="c">Qty / الكمية</th><th class="r">Price / السعر</th><th class="r">Total / الإجمالي</th></tr></thead><tbody>'
+        items.forEach(i => { h += '<tr><td>' + i.description + '</td><td class="c">' + i.quantity + '</td><td class="r">' + formatCurrency(i.unit_price) + '</td><td class="r">' + formatCurrency(i.total_price) + '</td></tr>' })
         h += '</tbody></table>'
-      } else h += '<p class="item-note">'+(inv.notes||'No details / لا توجد تفاصيل')+'</p>'
-      h += '</div>'
+      }
 
-      h += '<div class="totals">'
+      // ─── Totals + QR ───
+      h += '<div class="totals-wrap">'
+      h += '<div class="qr-col"><div class="qr-img" id="a4-qr"></div></div>'
+      h += '<div class="total-col"><div class="totals">'
       if (!isReceipt) {
-        h += '<div class="tr"><span>'+bl('subtotal')+'</span><span>'+formatCurrency(inv.subtotal)+'</span></div>'
-        if (Number(inv.discount)>0) h += '<div class="tr"><span>'+bl('discount')+'</span><span>-'+formatCurrency(inv.discount)+'</span></div>'
-        h += '<div class="tr grand"><span>'+bl('total')+'</span><span>'+formatCurrency(inv.total_amount)+'</span></div>'
-        h += '<div class="tr"><span>'+bl('amountPaid')+'</span><span style="color:var(--green)">'+formatCurrency(inv.amount_paid)+'</span></div>'
-        if (Number(inv.balance_due)>0) h += '<div class="tr"><span>'+bl('balance')+'</span><span style="color:var(--red)">'+formatCurrency(inv.balance_due)+'</span></div>'
-      } else h += '<div class="tr grand"><span>'+bl('amount')+'</span><span>'+formatCurrency(inv.total_amount)+'</span></div>'
+        h += '<div class="tr"><span>Subtotal / المجموع الفرعي</span><span>' + formatCurrency(inv.subtotal) + '</span></div>'
+        if (Number(inv.discount) > 0) h += '<div class="tr"><span>Discount / الخصم</span><span>-' + formatCurrency(inv.discount) + '</span></div>'
+        h += '<div class="tr grand"><span>TOTAL / الإجمالي</span><span>' + formatCurrency(inv.total_amount) + '</span></div>'
+        h += '<div class="tr"><span>Paid / المدفوع</span><span style="color:#2563eb">' + formatCurrency(inv.amount_paid) + '</span></div>'
+        if (Number(inv.balance_due) > 0) h += '<div class="tr"><span>Balance Due / المبلغ المتبقي</span><span style="color:#dc2626">' + formatCurrency(inv.balance_due) + '</span></div>'
+      } else {
+        h += '<div class="tr grand"><span>Amount / المبلغ</span><span>' + formatCurrency(inv.total_amount) + '</span></div>'
+      }
+      h += '</div></div>'
       h += '</div>'
 
-      if (!isReceipt) h += '<div class="words">' + numberToWords(Math.floor(inv.total_amount)) + ' Saudi Riyals / ريال سعودي</div>'
-      if (inv.notes) h += '<div class="notes"><b>' + blL('notes') + ':</b> ' + inv.notes + '</div>'
-      h += '<div class="ftr"><span class="en">Verified digitally | Safwan Opticals</span><span class="ar">تم التحقق رقمياً | صفوان للبصريات</span></div>'
+      // ─── Amount in words ───
+      h += '<div class="words">Amount in words: ' + numberToWords(Math.floor(inv.total_amount)) + ' Saudi Riyals</div>'
+
+      if (inv.notes) h += '<div class="notes"><b>' + bi('notes') + ':</b> ' + inv.notes + '</div>'
+
+      // ─── Footer ───
+      h += '<div class="bot">'
+      h += '<div>Thank you for choosing ' + shop.name + '</div>'
+      h += '<div class="ar">شكراً لاختيارك ' + (shop.arName || shop.name) + '</div>'
+      h += '</div>'
+      h += '<div class="fnote">Kingdom of Saudi Arabia | VAT: ' + shop.vat + (shop.cr ? ' | CR: ' + shop.cr : '') + ' | Tel: ' + shop.phone + (shop.receiptFooter ? ' | ' + shop.receiptFooter : '') + '</div>'
       h += '</div>'
 
       c.innerHTML = h
       document.getElementById('loading').style.display = 'none'
-    }
 
-    function blL(key) { return '<span class="en">'+(L[key]?L[key][0]:key)+'</span><span class="ar">'+(L[key]?L[key][1]:key)+'</span>' }
+      // Barcode
+      try { JsBarcode('#barcode-canvas', barcodeNum, { format: 'CODE128', lineColor: '#1a1a2e', width: 1.4, height: 35, displayValue: false, margin: 2 }) } catch (e) {}
+      // QR
+      try {
+        var q = document.getElementById('a4-qr')
+        new QRCode(q, { text: qrUrl, width: 300, height: 300, colorDark: '#1a1a2e', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.M })
+      } catch (e) {}
+
+      // Verify overlay dynamic info
+      document.getElementById('verify-title').textContent = isReceipt ? 'Verified Authentic Receipt' : 'Verified Authentic Invoice'
+      document.getElementById('verify-sub').textContent = shop.name + ' — Saudi Arabia'
+      document.getElementById('verify-info').innerHTML =
+        '<b>CR:</b> ' + (shop.cr || 'N/A') + ' &middot; <b>VAT:</b> ' + shop.vat + '<br>' +
+        '<b>Address:</b> ' + shop.address + '<br>' +
+        '<b>Phone:</b> ' + shop.phone + '<br><br>' +
+        '<span style="direction:rtl;display:inline-block">' + shop.arName + '</span><br>' +
+        '<span style="color:var(--green);font-weight:600">&#10003; This document is digitally verified</span><br>' +
+        '<span style="color:var(--green);font-weight:600">&#10003; تم التحقق من صحة هذه الوثيقة رقمياً</span>'
+    }
 
     function showError(msg) {
       document.getElementById('loading').style.display = 'none'

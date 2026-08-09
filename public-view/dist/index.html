@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Safwan Opticals</title>
-  <link rel="stylesheet" href="/src/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -24,6 +23,9 @@
     @keyframes spin { to {transform:rotate(360deg)} }
     .error-msg { text-align:center; padding:4rem 2rem; color:var(--muted); }
   </style>
+  <script type="module" crossorigin src="/assets/main-CIHN_Odn.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/style-pB53ce2g.js">
+  <link rel="stylesheet" crossorigin href="/assets/style-B1KIGsxs.css">
 </head>
 <body>
   <div class="home-wrap">
@@ -39,54 +41,5 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-  <script type="module">
-    import { getSupabase } from '/src/utils.js'
-
-    const sb = getSupabase()
-
-    async function load() {
-      if (!sb) { showError('System unavailable'); return }
-      const { data: s, error } = await sb.from('settings').select('*').limit(1).single()
-      if (error || !s) { showError('Could not load shop information'); return }
-
-      const name = s.shop_name || 'Safwan Opticals'
-      const arName = s.ar_name || 'صفوان للبصريات'
-      const address = s.shop_address || ''
-      const phone = s.shop_phone || ''
-      const vat = s.shop_vat || ''
-      const cr = s.cr_number || ''
-      const website = s.shop_website || ''
-      const logo = s.logo_url || ''
-
-      document.getElementById('shop-name').textContent = name
-      document.getElementById('shop-name-ar').textContent = arName
-      document.title = name
-
-      const logoEl = document.getElementById('shop-logo')
-      if (logo) { logoEl.src = logo; logoEl.classList.remove('placeholder') }
-      else logoEl.textContent = (name || 'S').charAt(0)
-
-      const card = document.getElementById('shop-card')
-      let rows = ''
-      if (cr) rows += '<div class="irow"><span class="l">CR No.</span><span class="v">' + cr + '</span></div>'
-      if (vat) rows += '<div class="irow"><span class="l">VAT No.</span><span class="v">' + vat + '</span></div>'
-      if (phone) rows += '<div class="irow"><span class="l">Phone</span><span class="v">' + phone + '</span></div>'
-      if (address) rows += '<div class="irow"><span class="l">Address</span><span class="v">' + address + '</span></div>'
-      card.innerHTML = rows || '<div class="irow"><span class="l">No information available</span></div>'
-
-      document.getElementById('home-footer').innerHTML = (website ? website + '<br>' : '') + '&copy; ' + new Date().getFullYear() + ' ' + name
-
-      document.getElementById('loading').style.display = 'none'
-      document.getElementById('shop-content').style.display = 'block'
-    }
-
-    function showError(msg) {
-      document.getElementById('loading').style.display = 'none'
-      document.getElementById('error').style.display = 'block'
-      document.getElementById('error-text').textContent = msg
-    }
-
-    load()
-  </script>
 </body>
 </html>
