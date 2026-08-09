@@ -23,6 +23,10 @@ import {
   fetchSettings,
   saveSettings,
   fetchSalesReport,
+  fetchExpenses,
+  createExpense,
+  updateExpense,
+  deleteExpense,
 } from '@/lib/supabase/data'
 
 // ─── Products ───
@@ -270,5 +274,51 @@ export function useSalesReport(startDate: string, endDate: string) {
     queryKey: ['reports', 'sales', startDate, endDate],
     queryFn: () => fetchSalesReport(startDate, endDate),
     enabled: !!startDate && !!endDate,
+  })
+}
+
+// ─── Expenses ───
+
+export function useExpenses() {
+  return useQuery({
+    queryKey: ['expenses'],
+    queryFn: fetchExpenses,
+  }) as unknown as { data: Record<string, any>[]; isLoading: boolean }
+}
+
+export function useCreateExpense() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: createExpense,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['expenses'] })
+      toast.success('Expense added')
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+export function useUpdateExpense() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Record<string, unknown> }) =>
+      updateExpense(id, updates),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['expenses'] })
+      toast.success('Expense updated')
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+export function useDeleteExpense() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: deleteExpense,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['expenses'] })
+      toast.success('Expense deleted')
+    },
+    onError: (err: Error) => toast.error(err.message),
   })
 }

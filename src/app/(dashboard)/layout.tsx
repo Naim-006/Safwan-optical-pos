@@ -15,6 +15,7 @@ import {
   Settings,
   Receipt,
   HardDrive,
+  Wallet,
   Menu,
   X,
   Glasses,
@@ -80,6 +81,7 @@ export default function DashboardLayout({
         { name: t('common.receipts'), href: '/receipts', icon: Receipt },
         { name: t('common.customers'), href: '/customers', icon: Users },
         { name: t('common.inventory'), href: '/inventory', icon: Package },
+        { name: t('common.finance'), href: '/finance', icon: Wallet },
       ],
     },
     {

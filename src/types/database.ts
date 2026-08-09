@@ -318,8 +318,7 @@ export interface Database {
           updated_at?: string
         }
       }
-      message_logs: {
-        Row: {
+      message_logs: {        Row: {
           id: string
           customer_id: string | null
           customer_name: string
@@ -362,6 +361,44 @@ export interface Database {
           created_at?: string
         }
       }
+      expenses: {
+        Row: {
+          id: string
+          title: string
+          category: string
+          amount: number
+          expense_date: string
+          payment_method: 'cash' | 'card' | 'transfer' | null
+          notes: string | null
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          category?: string
+          amount: number
+          expense_date?: string
+          payment_method?: 'cash' | 'card' | 'transfer' | null
+          notes?: string | null
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          category?: string
+          amount?: number
+          expense_date?: string
+          payment_method?: 'cash' | 'card' | 'transfer' | null
+          notes?: string | null
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {}
     Functions: {}
@@ -376,3 +413,4 @@ export type Invoice = Database['public']['Tables']['invoices']['Row']
 export type InvoiceItem = Database['public']['Tables']['invoice_items']['Row']
 export type ShopSettings = Database['public']['Tables']['settings']['Row']
 export type MessageLog = Database['public']['Tables']['message_logs']['Row']
+export type Expense = Database['public']['Tables']['expenses']['Row']

@@ -222,3 +222,36 @@ export async function generateNextNumber(prefix: 'IN' | 'RE'): Promise<string> {
   const next = (count || 0) + 1
   return `SA-${prefix}-${String(next).padStart(4, '0')}`
 }
+
+// ─── Expenses ───
+
+export async function fetchExpenses(): Promise<Row[]> {
+  const sb = getSupabase()
+  if (!sb) return []
+  const { data, error } = await sb.from('expenses').select('*').order('expense_date', { ascending: false })
+  if (error) throw error
+  return (data as Row[]) || []
+}
+
+export async function createExpense(expense: Row) {
+  const sb = getSupabase()
+  if (!sb) throw new Error('Supabase not configured')
+  const { data, error } = await sb.from('expenses').insert(expense as never).select().single()
+  if (error) throw error
+  return data as Row
+}
+
+export async function updateExpense(id: string, updates: Row) {
+  const sb = getSupabase()
+  if (!sb) throw new Error('Supabase not configured')
+  const { data, error } = await sb.from('expenses').update(updates as never).eq('id', id).select().single()
+  if (error) throw error
+  return data as Row
+}
+
+export async function deleteExpense(id: string) {
+  const sb = getSupabase()
+  if (!sb) throw new Error('Supabase not configured')
+  const { error } = await sb.from('expenses').delete().eq('id', id)
+  if (error) throw error
+}
