@@ -249,6 +249,33 @@
       document.getElementById('error').style.display = 'block'
       document.getElementById('error-text').textContent = msg
     }
+
+    // ─── Responsive: scale the fixed-width A4 page to fit mobile screens ───
+    function fitToScreen() {
+      const page = document.querySelector('.page')
+      const wrap = document.getElementById('invoice-container')
+      if (!page || !wrap) return
+      const avail = document.getElementById('topbar').offsetParent
+        ? document.querySelector('.container').clientWidth
+        : document.querySelector('.container').clientWidth
+      const natural = page.offsetWidth || 794
+      const scale = Math.min(1, avail / natural)
+      page.style.transformOrigin = 'top left'
+      page.style.transform = 'scale(' + scale + ')'
+      wrap.style.height = (page.offsetHeight * scale) + 'px'
+    }
+    window.addEventListener('resize', fitToScreen)
+    const origRender = render
+    const origShowError = showError
+    render = function(inv, items, shop) {
+      origRender(inv, items, shop)
+      setTimeout(fitToScreen, 50)
+    }
+    showError = function(msg) {
+      origShowError(msg)
+      fitToScreen()
+    }
+    window.addEventListener('load', function(){ setTimeout(fitToScreen, 100) })
   </script>
 </body>
 </html>

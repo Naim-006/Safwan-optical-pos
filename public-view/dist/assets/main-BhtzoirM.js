@@ -1,0 +1,1 @@
+import"./style-DUUSvUM6.js";async function t(){{n("System unavailable");return}}function n(e){document.getElementById("loading").style.display="none",document.getElementById("error").style.display="block",document.getElementById("error-text").textContent=e}t();
