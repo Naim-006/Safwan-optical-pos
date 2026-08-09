@@ -39,7 +39,7 @@ import { useLang } from '@/contexts/lang-provider'
 
 type ProdRow = Record<string, any>
 
-const CATEGORIES = ['Frames', 'Lenses', 'Contact Lenses', 'Accessories', 'Solutions', 'Other']
+const CATEGORIES = ['Frames', 'Lenses', 'Glasses', 'Contact Lenses', 'Accessories', 'Solutions', 'Other']
 const ITEMS_PER_PAGE_OPTIONS = [10, 25, 50, 100]
 
 export default function InventoryPage() {
@@ -344,9 +344,9 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('inventory.title')}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('inventory.title')}</h1>
           <p className="text-muted-foreground">{t('inventory.subtitle')}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -355,16 +355,16 @@ export default function InventoryPage() {
               <Printer className="h-4 w-4 mr-2" /> Print Selected ({selectedForPrint.size})
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={handlePrintAll}>
-            <Printer className="h-4 w-4 mr-2" /> Print All Labels
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handlePrintAll}>
+            <Printer className="h-4 w-4 mr-2" /> Print All
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExport}>
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" /> Export
           </Button>
-          <Button variant="outline" size="sm" onClick={handleImport}>
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handleImport}>
             <Upload className="h-4 w-4 mr-2" /> Import
           </Button>
-          <Button onClick={() => { setEditingProduct(null); setDialogOpen(true) }}>
+          <Button className="flex-1 sm:flex-none" onClick={() => { setEditingProduct(null); setDialogOpen(true) }}>
             <Plus className="h-4 w-4 mr-2" /> Add Product
           </Button>
         </div>
@@ -408,71 +408,114 @@ export default function InventoryPage() {
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[30px]">
-                      <input
-                        type="checkbox"
-                        className="rounded"
-                        checked={selectedForPrint.size === paginated.length && paginated.length > 0}
-                        onChange={toggleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Barcode</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-right">Stock</TableHead>
-                    <TableHead className="w-[110px] text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginated.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell>
+              {/* Desktop table */}
+              <div className="hidden md:block scroll-x -mx-1 px-1">
+                <Table className="min-w-[760px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[30px]">
                         <input
                           type="checkbox"
                           className="rounded"
-                          checked={selectedForPrint.has(product.id)}
-                          onChange={() => toggleSelect(product.id)}
+                          checked={selectedForPrint.size === paginated.length && paginated.length > 0}
+                          onChange={toggleSelectAll}
                         />
-                      </TableCell>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>
-                        {product.category ? (
-                          <Badge variant="secondary">{product.category}</Badge>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">{product.barcode}</TableCell>
-                      <TableCell className="text-right">{formatCurrency(product.price)}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge variant={product.quantity === 0 ? 'destructive' : product.quantity < 5 ? 'secondary' : 'outline'}>
-                          {product.quantity === 0 ? 'Out' : product.quantity}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-1 justify-end">
-                          <Button variant="ghost" size="icon" title="Print barcode label" onClick={() => handlePrintSingle(product)}>
-                            <Barcode className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => { setEditingProduct(product); setDialogOpen(true) }}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(product)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
+                      </TableHead>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Barcode</TableHead>
+                      <TableHead className="text-right">Price</TableHead>
+                      <TableHead className="text-right">Stock</TableHead>
+                      <TableHead className="w-[110px] text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginated.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            className="rounded"
+                            checked={selectedForPrint.has(product.id)}
+                            onChange={() => toggleSelect(product.id)}
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>
+                          {product.category ? (
+                            <Badge variant="secondary">{product.category}</Badge>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{product.barcode}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(product.price)}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant={product.quantity === 0 ? 'destructive' : product.quantity < 5 ? 'secondary' : 'outline'}>
+                            {product.quantity === 0 ? 'Out' : product.quantity}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-1 justify-end">
+                            <Button variant="ghost" size="icon" title="Print barcode label" onClick={() => handlePrintSingle(product)}>
+                              <Barcode className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => { setEditingProduct(product); setDialogOpen(true) }}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(product)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden space-y-3">
+                {paginated.map((product) => (
+                  <div key={product.id} className="rounded-xl border p-3.5">
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        className="rounded mt-1 shrink-0"
+                        checked={selectedForPrint.has(product.id)}
+                        onChange={() => toggleSelect(product.id)}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-medium text-sm truncate">{product.name}</p>
+                          <span className="font-bold text-sm shrink-0">{formatCurrency(product.price)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          {product.category ? <Badge variant="secondary">{product.category}</Badge> : null}
+                          <Badge variant={product.quantity === 0 ? 'destructive' : product.quantity < 5 ? 'secondary' : 'outline'}>
+                            {product.quantity === 0 ? 'Out of stock' : `Stock: ${product.quantity}`}
+                          </Badge>
+                        </div>
+                        <p className="font-mono text-[11px] text-muted-foreground mt-1.5 truncate">{product.barcode}</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-1 mt-2 pt-2 border-t">
+                      <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => handlePrintSingle(product)}>
+                        <Barcode className="h-3.5 w-3.5 mr-1" /> Label
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setEditingProduct(product); setDialogOpen(true) }}>
+                        <Edit className="h-3.5 w-3.5 mr-1" /> Edit
+                      </Button>
+                      <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setDeleteTarget(product)}>
+                        <Trash2 className="h-3.5 w-3.5 mr-1 text-destructive" /> Delete
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     Show
                     <Select value={String(perPage)} onValueChange={(v) => { if (v) { setPerPage(Number(v)); setPage(1) } }}>
@@ -485,7 +528,7 @@ export default function InventoryPage() {
                     </Select>
                     of {filtered.length}
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 overflow-x-auto no-scrollbar max-w-full">
                     <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</Button>
                     {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                       const start = Math.max(0, Math.min(page - 3, totalPages - 5))
