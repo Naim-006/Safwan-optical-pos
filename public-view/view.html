@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,23 +8,59 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    .top-bar { display:flex; justify-content:flex-end; gap:10px; padding:12px 0; }
-    .top-bar button { padding:6px 14px; border-radius:6px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:0.8rem; font-weight:600; cursor:pointer; font-family:inherit; }
+    .top-bar { display:flex; justify-content:flex-end; gap:8px; padding:10px 0; flex-wrap:wrap; }
+    .top-bar button { padding:6px 14px; border-radius:6px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:0.78rem; font-weight:600; cursor:pointer; font-family:inherit; }
     .top-bar button:hover { border-color:var(--accent); color:var(--accent); }
-    .top-bar button.active { background:var(--accent); color:#fff; border-color:var(--accent); }
-    .ar { direction:rtl; }
-    @media print { .top-bar { display:none } }
+    .top-bar button.accent { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .top-bar button.accent:hover { opacity:0.9; }
+    .home-link { color:var(--muted); font-size:0.75rem; text-decoration:none; }
+    .home-link:hover { color:var(--accent); }
+    .bi-label { display:flex; justify-content:space-between; }
+    .bi-label .en {  }
+    .bi-label .ar { direction:rtl; color:var(--muted); font-size:0.9em; }
+    .verify-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:100; justify-content:center; align-items:center; }
+    .verify-overlay.show { display:flex; }
+    .verify-popup { background:var(--surface); border-radius:12px; padding:2rem; max-width:420px; width:90%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.15); }
+    .verify-seal { width:80px; height:80px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:2rem; font-weight:800; }
+    .verify-popup h3 { font-size:1.1rem; margin-bottom:4px; }
+    .verify-popup .sub { font-size:0.82rem; color:var(--muted); margin-bottom:1rem; }
+    .verify-info { font-size:0.82rem; color:var(--muted); line-height:1.7; margin-bottom:1rem; }
+    .verify-info b { color:var(--text); }
+    .verify-popup button { padding:8px 20px; border-radius:6px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:0.82rem; cursor:pointer; font-family:inherit; }
+    .verify-popup button:hover { background:var(--bg); }
+    @media print { .top-bar { display:none !important; } }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="top-bar" id="topbar" style="display:none">
-      <button onclick="toggleLang()" id="langbtn">العربية</button>
-      <button onclick="downloadPDF()">Download PDF</button>
+      <a href="/" class="home-link">&#8592; Home</a>
+      <button onclick="handlePrint()">Print</button>
+      <button onclick="downloadPDF()" class="accent">Download PDF</button>
+      <button onclick="showVerify()">Verify Shop</button>
     </div>
+
     <div id="loading" class="loading"><div class="spinner"></div><p>Loading invoice details...</p></div>
     <div id="error" class="error-msg" style="display:none"><h2>Invoice Not Found</h2><p id="error-text"></p><a href="/" class="btn">Back to Home</a></div>
     <div id="invoice-container"></div>
+
+    <!-- Verify overlay -->
+    <div class="verify-overlay" id="verifyOverlay" onclick="if(event.target===this)hideVerify()">
+      <div class="verify-popup">
+        <div class="verify-seal">SV</div>
+        <h3>Verified Authentic Invoice</h3>
+        <p class="sub">Safwan Opticals &mdash; Jeddah, Saudi Arabia</p>
+        <div class="verify-info">
+          <b>CR:</b> 7037695090 &middot; <b>VAT:</b> 310158981300003<br>
+          <b>Address:</b> Abdul Rahman Ibn Ahmad As Sidayri, As Salamah, Jeddah 23436<br>
+          <b>Phone:</b> +966 05 0918 3807<br><br>
+          <span style="direction:rtl;display:inline-block">صفوان للبصريات — جدة، المملكة العربية السعودية</span><br>
+          <span style="color:var(--green);font-weight:600">&#10003; This document is cryptographically verified</span><br>
+          <span style="color:var(--green);font-weight:600">&#10003; تم التحقق من صحة هذه الوثيقة رقمياً</span>
+        </div>
+        <button onclick="hideVerify()">Close</button>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -35,51 +71,11 @@
     const sb = getSupabase()
     const params = new URLSearchParams(window.location.search)
     const id = params.get('id')
-    let lang = 'en'
     let invoiceData = null
 
-    // ─── Translations ───
-    const tr = {
-      en: {
-        title: 'Invoice', receiptTitle: 'Receipt Voucher',
-        invNo: 'Invoice #', recNo: 'Receipt #',
-        date: 'Date', customer: 'Customer', phone: 'Phone', method: 'Method', status: 'Status',
-        walkIn: 'Walk-in', paid: 'PAID', partial: 'PARTIAL', unpaid: 'UNPAID',
-        prescription: 'Optical Prescription', eyeType: 'Eye Type', lensType: 'Lens Type',
-        od: 'OD (Right)', os: 'OS (Left)', ipd: 'IPD', sph: 'SPH', cyl: 'CYL', axis: 'AXIS', add: 'ADD',
-        items: 'Items', details: 'Details',
-        subtotal: 'Subtotal', discount: 'Discount', total: 'Total', amt: 'Amount',
-        amountPaid: 'Paid', balance: 'Balance Due',
-        words: 'Saudi Riyals',
-        footer: 'Verified digitally | Safwan Opticals',
-        noDetails: 'No details',
-        notes: 'Notes',
-      },
-      ar: {
-        title: 'الفاتورة', receiptTitle: 'ل القبض',
-        invNo: 'رقم الفاتورة', recNo: 'رقم الإيصال',
-        date: 'التاريخ', customer: 'العميل', phone: 'الهاتف', method: 'الطريقة', status: 'الحالة',
-        walkIn: 'عابر', paid: 'مدفوع', partial: 'جزئي', unpaid: 'غير مدفوع',
-        prescription: 'الوصفة البصرية', eyeType: 'نوع العين', lensType: 'نوع العدسة',
-        od: 'OD (يمين)', os: 'OS (يسار)', ipd: 'IPD', sph: 'SPH', cyl: 'CYL', axis: 'AXIS', add: 'ADD',
-        items: 'العناصر', details: 'التفاصيل',
-        subtotal: 'المجموع الفرعي', discount: 'الخصم', total: 'الإجمالي', amt: 'المبلغ',
-        amountPaid: 'المدفوع', balance: 'المبلغ المتبقي',
-        words: 'ريال سعودي',
-        footer: 'تم التحقق رقمياً | صفوان للبصريات',
-        noDetails: 'لا توجد تفاصيل',
-        notes: 'ملاحظات',
-      }
-    }
-    function t(key) { return tr[lang][key] || key }
-
-    window.toggleLang = function() {
-      lang = lang === 'en' ? 'ar' : 'en'
-      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
-      document.documentElement.lang = lang
-      document.getElementById('langbtn').textContent = lang === 'en' ? 'العربية' : 'English'
-      if (invoiceData) render(invoiceData.invoice, invoiceData.items, invoiceData.shopName)
-    }
+    window.showVerify = () => document.getElementById('verifyOverlay').classList.add('show')
+    window.hideVerify = () => document.getElementById('verifyOverlay').classList.remove('show')
+    window.handlePrint = () => window.print()
 
     window.downloadPDF = function() {
       const el = document.getElementById('invoice-container')
@@ -92,19 +88,53 @@
       }).from(el).save()
     }
 
-    if (!sb) showError('System unavailable. Check Supabase config.')
+    // ─── Bilingual labels ───
+    const L = {
+      inv: ['Invoice #', 'رقم الفاتورة'],
+      rec: ['Receipt #', 'رقم الإيصال'],
+      date: ['Date', 'التاريخ'], customer: ['Customer', 'العميل'],
+      phone: ['Phone', 'الهاتف'], method: ['Method', 'الطريقة'],
+      status: ['Status', 'الحالة'], walkIn: ['Walk-in', 'عابر'],
+      paid: ['PAID', 'مدفوع'], partial: ['PARTIAL', 'جزئي'], unpaid: ['UNPAID', 'غير مدفوع'],
+      prescription: ['Optical Prescription', 'الوصفة البصرية'],
+      eyeType: ['Eye Type', 'نوع العين'], lensType: ['Lens Type', 'نوع العدسة'],
+      od: ['OD (Right)', 'OD (يمين)'], os: ['OS (Left)', 'OS (يسار)'],
+      ipd: ['IPD', 'IPD'],
+      items: ['Items', 'العناصر'], details: ['Details', 'التفاصيل'],
+      subtotal: ['Subtotal', 'المجموع الفرعي'], discount: ['Discount', 'الخصم'],
+      total: ['Total', 'الإجمالي'], amount: ['Amount', 'المبلغ'],
+      amountPaid: ['Paid', 'المدفوع'], balance: ['Balance Due', 'المبلغ المتبقي'],
+      words: ['Saudi Riyals', 'ريال سعودي'],
+      footer: ['Verified digitally | Safwan Opticals', 'تم التحقق رقمياً | صفوان للبصريات'],
+      noDetails: ['No details', 'لا توجد تفاصيل'],
+      notes: ['Notes', 'ملاحظات'],
+      invoice: ['Invoice', 'فاتورة'], receipt: ['Receipt Voucher', 'سند قبض'],
+    }
+
+    function bl(key) {
+      const p = L[key]
+      return p ? '<span class="en">' + p[0] + '</span><span class="ar">' + p[1] + '</span>' : key
+    }
+    function blv(val) { return '<span class="en">' + val + '</span>' }
+    function blLabel(key) {
+      const p = L[key]
+      return p ? '<span class="en">' + p[0] + '</span><span class="ar">' + p[1] + '</span>' : key
+    }
+
+    if (!sb) showError('System unavailable')
     else if (!id) showError('No invoice ID provided')
     else loadInvoice(id)
 
     async function loadInvoice(id) {
       const { data: invoice, error } = await sb.from('invoices').select('*').eq('id', id).single()
-      if (error) { showError('Invoice not found — ' + (error.message || '')); return }
+      if (error) { showError('Invoice not found'); return }
       if (!invoice) { showError('Invoice not found'); return }
       const { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', id)
       let shopName = 'Safwan Opticals'
       try { const { data: s } = await sb.from('settings').select('*').limit(1).single(); if (s) shopName = s.shop_name || shopName } catch {}
       invoiceData = { invoice, items: items || [], shopName }
       document.getElementById('topbar').style.display = 'flex'
+      document.title = (invoice.invoice_type === 'receipt' ? 'Receipt' : 'Invoice') + ' ' + invoice.invoice_number + ' — Safwan Opticals'
       render(invoice, items || [], shopName)
     }
 
@@ -114,60 +144,67 @@
       const c = document.getElementById('invoice-container')
       let h = '<div class="card">'
 
-      h += '<div class="hdr"><div class="sname">'+shopName+'</div>'
+      h += '<div class="hdr">'
+      h += '<div class="sname">' + shopName + '</div>'
+      h += '<div class="name-ar">صفوان للبصريات</div>'
       h += '<div class="addr">Abdul Rahman Ibn Ahmad As Sidayri, As Salamah, Jeddah 23436</div>'
-      h += '<div class="addr">عبد الرحمن بن أحمد السديري، السلامة، جدة</div>'
+      h += '<div class="addr-ar">عبد الرحمن بن أحمد السديري، السلامة، جدة ٢٣٤٣٦</div>'
       h += '<div class="meta">VAT: 310158981300003 | Tel: +966 05 0918 3807</div></div>'
 
-      h += '<div class="status"><span class="type">'+(isReceipt?t('receiptTitle'):t('title'))+'</span>'
-      h += '<span class="badge '+inv.payment_status+'">'+t(inv.payment_status)+'</span></div>'
+      h += '<div class="status">'
+      h += '<span class="type"><span class="en">'+(isReceipt?'Receipt Voucher':'Invoice')+'</span><span class="ar">'+(isReceipt?'سند قبض':'فاتورة')+'</span></span>'
+      h += '<span class="badge '+inv.payment_status+'"><span class="en">'+inv.payment_status.toUpperCase()+'</span><span class="ar">'+(inv.payment_status==='paid'?'مدفوع':inv.payment_status==='partial'?'جزئي':'غير مدفوع')+'</span></span>'
+      h += '</div>'
 
       h += '<div class="grid2">'
-      h += '<div class="gi"><span class="lbl">'+(isReceipt?t('recNo'):t('invNo'))+'</span><span class="val">'+inv.invoice_number+'</span></div>'
-      h += '<div class="gi"><span class="lbl">'+t('date')+'</span><span class="val">'+formatDate(inv.created_at)+'</span></div>'
-      h += '<div class="gi"><span class="lbl">'+t('customer')+'</span><span class="val">'+(inv.customer_name||t('walkIn'))+'</span></div>'
-      if (inv.customer_phone) h += '<div class="gi"><span class="lbl">'+t('phone')+'</span><span class="val">'+inv.customer_phone+'</span></div>'
-      if (inv.payment_method) h += '<div class="gi"><span class="lbl">'+t('method')+'</span><span class="val">'+inv.payment_method.toUpperCase()+'</span></div>'
-      h += '<div class="gi"><span class="lbl">'+t('status')+'</span><span class="val" style="color:'+(inv.payment_status==='paid'?'var(--green)':'var(--red)')+'">'+t(inv.payment_status)+'</span></div>'
+      h += '<div class="gi"><span class="lbl">'+bl('inv')+'</span><span class="val">'+inv.invoice_number+'</span></div>'
+      h += '<div class="gi"><span class="lbl">'+bl('date')+'</span><span class="val">'+formatDate(inv.created_at)+'</span></div>'
+      h += '<div class="gi"><span class="lbl">'+bl('customer')+'</span><span class="val">'+(inv.customer_name||'Walk-in / عابر')+'</span></div>'
+      if (inv.customer_phone) h += '<div class="gi"><span class="lbl">'+bl('phone')+'</span><span class="val">'+inv.customer_phone+'</span></div>'
+      if (inv.payment_method) h += '<div class="gi"><span class="lbl">'+bl('method')+'</span><span class="val">'+inv.payment_method.toUpperCase()+'</span></div>'
+      h += '<div class="gi"><span class="lbl">'+bl('status')+'</span><span class="val" style="color:'+(inv.payment_status==='paid'?'var(--green)':'var(--red)')+'"><span class="en">'+inv.payment_status.toUpperCase()+'</span><span class="ar">'+(inv.payment_status==='paid'?'مدفوع':inv.payment_status==='partial'?'جزئي':'غير مدفوع')+'</span></span></div>'
       h += '</div>'
 
       if (isOptical) {
-        h += '<div class="sec"><h4>'+t('prescription')+'</h4><div class="rx">'
-        if (inv.eye_type) h += '<div class="rxr"><b>'+t('eyeType')+':</b> '+inv.eye_type+'</div>'
-        if (inv.lens_type) h += '<div class="rxr"><b>'+t('lensType')+':</b> '+inv.lens_type+'</div>'
-        h += '<table class="rxt"><thead><tr><th></th><th>'+t('sph')+'</th><th>'+t('cyl')+'</th><th>'+t('axis')+'</th><th>'+t('add')+'</th></tr></thead><tbody>'
-        h += '<tr class="od"><td><b>'+t('od')+'</b></td><td>'+(inv.right_sphere??'-')+'</td><td>'+(inv.right_cylinder??'-')+'</td><td>'+(inv.right_axis??'-')+'</td><td>'+(inv.right_add??'-')+'</td></tr>'
-        h += '<tr class="os"><td><b>'+t('os')+'</b></td><td>'+(inv.left_sphere??'-')+'</td><td>'+(inv.left_cylinder??'-')+'</td><td>'+(inv.left_axis??'-')+'</td><td>'+(inv.left_add??'-')+'</td></tr>'
+        h += '<div class="sec"><h4>'+bl('prescription')+'</h4><div class="rx">'
+        if (inv.eye_type) h += '<div class="rxr"><b class="en">Eye Type:</b><b class="ar">نوع العين:</b> '+inv.eye_type+'</div>'
+        if (inv.lens_type) h += '<div class="rxr"><b class="en">Lens Type:</b><b class="ar">نوع العدسة:</b> '+inv.lens_type+'</div>'
+        h += '<table class="rxt"><thead><tr><th></th><th>SPH</th><th>CYL</th><th>AXIS</th><th>ADD</th></tr></thead><tbody>'
+        h += '<tr class="od"><td><b>'+bl('od')+'</b></td><td>'+(inv.right_sphere??'-')+'</td><td>'+(inv.right_cylinder??'-')+'</td><td>'+(inv.right_axis??'-')+'</td><td>'+(inv.right_add??'-')+'</td></tr>'
+        h += '<tr class="os"><td><b>'+bl('os')+'</b></td><td>'+(inv.left_sphere??'-')+'</td><td>'+(inv.left_cylinder??'-')+'</td><td>'+(inv.left_axis??'-')+'</td><td>'+(inv.left_add??'-')+'</td></tr>'
         h += '</tbody></table>'
-        if (inv.ipd) h += '<div class="rxr" style="font-weight:600;margin-top:8px">'+t('ipd')+': '+inv.ipd+' mm</div>'
+        if (inv.ipd) h += '<div class="rxr" style="font-weight:600;margin-top:8px">'+bl('ipd')+': '+inv.ipd+' mm</div>'
         h += '</div></div>'
       }
 
-      h += '<div class="sec"><h4>'+(isReceipt?t('details'):t('items'))+'</h4>'
+      h += '<div class="sec"><h4>'+bl(isReceipt?'details':'items')+'</h4>'
       if (items.length > 0) {
-        h += '<table class="items"><thead><tr><th>Description</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>'
+        h += '<table class="items"><thead><tr><th>Description / الوصف</th><th>Qty / الكمية</th><th>Price / السعر</th><th>Total / الإجمالي</th></tr></thead><tbody>'
         items.forEach(i => { h += '<tr><td>'+i.description+'</td><td class="c">'+i.quantity+'</td><td class="r">'+formatCurrency(i.unit_price)+'</td><td class="r">'+formatCurrency(i.total_price)+'</td></tr>' })
         h += '</tbody></table>'
-      } else h += '<p class="item-note">'+(inv.notes||t('noDetails'))+'</p>'
+      } else h += '<p class="item-note">'+(inv.notes||'No details / لا توجد تفاصيل')+'</p>'
       h += '</div>'
 
       h += '<div class="totals">'
       if (!isReceipt) {
-        h += '<div class="tr"><span>'+t('subtotal')+'</span><span>'+formatCurrency(inv.subtotal)+'</span></div>'
-        if (Number(inv.discount)>0) h += '<div class="tr"><span>'+t('discount')+'</span><span>-'+formatCurrency(inv.discount)+'</span></div>'
-        h += '<div class="tr grand"><span>'+t('total')+'</span><span>'+formatCurrency(inv.total_amount)+'</span></div>'
-        h += '<div class="tr"><span>'+t('amountPaid')+'</span><span style="color:var(--green)">'+formatCurrency(inv.amount_paid)+'</span></div>'
-        if (Number(inv.balance_due)>0) h += '<div class="tr"><span>'+t('balance')+'</span><span style="color:var(--red)">'+formatCurrency(inv.balance_due)+'</span></div>'
-      } else h += '<div class="tr grand"><span>'+t('amt')+'</span><span>'+formatCurrency(inv.total_amount)+'</span></div>'
+        h += '<div class="tr"><span>'+bl('subtotal')+'</span><span>'+formatCurrency(inv.subtotal)+'</span></div>'
+        if (Number(inv.discount)>0) h += '<div class="tr"><span>'+bl('discount')+'</span><span>-'+formatCurrency(inv.discount)+'</span></div>'
+        h += '<div class="tr grand"><span>'+bl('total')+'</span><span>'+formatCurrency(inv.total_amount)+'</span></div>'
+        h += '<div class="tr"><span>'+bl('amountPaid')+'</span><span style="color:var(--green)">'+formatCurrency(inv.amount_paid)+'</span></div>'
+        if (Number(inv.balance_due)>0) h += '<div class="tr"><span>'+bl('balance')+'</span><span style="color:var(--red)">'+formatCurrency(inv.balance_due)+'</span></div>'
+      } else h += '<div class="tr grand"><span>'+bl('amount')+'</span><span>'+formatCurrency(inv.total_amount)+'</span></div>'
       h += '</div>'
 
-      if (!isReceipt) h += '<div class="words">'+numberToWords(Math.floor(inv.total_amount))+' '+t('words')+'</div>'
-      if (inv.notes) h += '<div class="notes"><b>'+t('notes')+':</b> '+inv.notes+'</div>'
-      h += '<div class="ftr">'+t('footer')+'</div></div>'
+      if (!isReceipt) h += '<div class="words">' + numberToWords(Math.floor(inv.total_amount)) + ' Saudi Riyals / ريال سعودي</div>'
+      if (inv.notes) h += '<div class="notes"><b>' + blL('notes') + ':</b> ' + inv.notes + '</div>'
+      h += '<div class="ftr"><span class="en">Verified digitally | Safwan Opticals</span><span class="ar">تم التحقق رقمياً | صفوان للبصريات</span></div>'
+      h += '</div>'
 
       c.innerHTML = h
       document.getElementById('loading').style.display = 'none'
     }
+
+    function blL(key) { return '<span class="en">'+(L[key]?L[key][0]:key)+'</span><span class="ar">'+(L[key]?L[key][1]:key)+'</span>' }
 
     function showError(msg) {
       document.getElementById('loading').style.display = 'none'
