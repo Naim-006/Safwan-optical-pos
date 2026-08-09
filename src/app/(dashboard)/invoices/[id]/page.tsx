@@ -15,6 +15,7 @@ import {
 import { useInvoice, useInvoiceItems, useShopSettings } from '@/hooks/use-data'
 import { formatCurrency, numberToWords } from '@/lib/utils'
 import { generateA4Html, invoiceTotalsHtml, shopHeaderHtml, type ShopInfo } from '@/lib/shop-template'
+import { openPrintDoc, isTauri } from '@/lib/native'
 
 const PUBLIC_URL = 'https://safwanoptical-view.vercel.app'
 const SITE_URL = PUBLIC_URL
@@ -155,7 +156,103 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
   }
 
   // ─── A4 PDF Download ───
-  const handlePDF = () => renderA4Invoice(true)
+  const handlePDF = async () => {
+    toast.loading('Generating PDF...')
+    
+    try {
+      const { jsPDF } = await import('jspdf')
+      const html2canvas = await import('html2canvas')
+      
+      // Create a hidden container with the invoice content
+      const container = document.createElement('div')
+      container.style.position = 'fixed'
+      container.style.left = '-9999px'
+      container.style.top = '0'
+      container.style.width = '210mm'
+      container.style.background = 'white'
+      container.style.padding = '10mm'
+      document.body.appendChild(container)
+      
+      const s = shop as ShopInfo
+      const isOptical = inv.right_sphere != null || inv.eye_type
+
+      const metaHtml = `<div class="meta">
+        <div class="col"><b>Invoice #</b> ${inv.invoice_number}<br><b>Customer</b> ${inv.customer_name || 'Walk-in'}<br>${inv.customer_phone ? `<b>Phone</b> ${inv.customer_phone}` : ''}</div>
+        <div class="col" style="text-align:right"><b>Date</b> ${date}<br><b>Status</b> <span style="color:${inv.payment_status==='paid'?'#16a34a':'#dc2626'};font-weight:700">${(inv.payment_status||'').toUpperCase()}</span><br>${inv.payment_method ? `<b>Method</b> ${inv.payment_method.toUpperCase()}` : ''}</div>
+      </div>`
+
+      const extraHtml = isOptical ? `
+        <div class="rx-grid">
+          <div class="rx-box od"><h4>RIGHT (OD)</h4>
+            <table><tr><td>SPH</td><td>${inv.right_sphere??'-'}</td></tr><tr><td>CYL</td><td>${inv.right_cylinder??'-'}</td></tr><tr><td>AXIS</td><td>${inv.right_axis??'-'}</td></tr><tr><td>ADD</td><td>${inv.right_add??'-'}</td></tr></table>
+          </div>
+          <div class="rx-box os"><h4>LEFT (OS)</h4>
+            <table><tr><td>SPH</td><td>${inv.left_sphere??'-'}</td></tr><tr><td>CYL</td><td>${inv.left_cylinder??'-'}</td></tr><tr><td>AXIS</td><td>${inv.left_axis??'-'}</td></tr><tr><td>ADD</td><td>${inv.left_add??'-'}</td></tr></table>
+          </div>
+        </div>
+        ${inv.eye_type ? `<div class="rx-extra"><b>Eye Type:</b> ${inv.eye_type}</div>` : ''}
+        ${inv.lens_type ? `<div class="rx-extra"><b>Lens Type:</b> ${inv.lens_type}</div>` : ''}
+        ${inv.ipd ? `<div class="rx-extra"><b>IPD:</b> ${inv.ipd} mm</div>` : ''}
+      ` : ''
+
+      const itemsHtml = `<table class="items">
+        <thead><tr><th>Description</th><th class="c" style="width:12%">Qty</th><th class="r" style="width:18%">Price</th><th class="r" style="width:20%">Total</th></tr></thead>
+        <tbody>${items.map((i:any) => `<tr><td>${i.description}</td><td class="c">${i.quantity}</td><td class="r">${formatCurrency(i.unit_price)}</td><td class="r">${formatCurrency(i.total_price)}</td></tr>`).join('')}</tbody>
+      </table>`
+
+      const barcodeNum = inv.invoice_number?.split('-').pop() || ''
+      const dateTime = new Date().toLocaleString('en-SA', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:true })
+
+      let html = generateA4Html({
+        shop: s,
+        type: 'invoice',
+        title: 'INVOICE',
+        metaHtml,
+        extraHtml,
+        itemsHtml,
+        totalsHtml: invoiceTotalsHtml(inv, formatCurrency),
+        wordsHtml: `<div class="words">Amount in words: ${numberToWords(Math.floor(inv.total_amount))} Saudi Riyals</div>`,
+        qrHtml: `<div id="a4-qr"></div>`,
+        footerHtml: '',
+        barcodeNum,
+        dateTime,
+      })
+
+      container.innerHTML = html
+      
+      // Generate QR code
+      const QRCode = (await import('qrcode')).default
+      const qrCanvas = await QRCode.toCanvas(qrUrl, { width: 320 })
+      const qrContainer = container.querySelector('#a4-qr')
+      if (qrContainer) {
+        qrCanvas.style.width = '42mm'
+        qrCanvas.style.height = '42mm'
+        qrContainer.appendChild(qrCanvas)
+      }
+
+      // Wait for images to load
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      // Generate PDF
+      const canvas = await html2canvas.default(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      })
+
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
+      const imgData = canvas.toDataURL('image/jpeg', 0.98)
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297)
+      pdf.save(`Invoice_${inv.invoice_number}.pdf`)
+
+      // Cleanup
+      document.body.removeChild(container)
+      toast.success('PDF downloaded successfully')
+    } catch (error) {
+      console.error('PDF generation error:', error)
+      toast.error('Failed to generate PDF')
+    }
+  }
 
   // ─── Print A4 Directly ───
   const handlePrintA4 = () => renderA4Invoice(false)
@@ -250,10 +347,10 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
           <ArrowLeft className="h-4 w-4 mr-2" /> Back
         </Button>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handlePrint}>
+          <Button variant="outline" size="sm" className="hidden sm:flex flex-1 sm:flex-none" onClick={handlePrint}>
             <Printer className="h-4 w-4 mr-2" /> Thermal Print
           </Button>
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handlePrintA4}>
+          <Button variant="outline" size="sm" className="hidden sm:flex flex-1 sm:flex-none" onClick={handlePrintA4}>
             <Printer className="h-4 w-4 mr-2" /> Print A4
           </Button>
           <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handlePDF}>

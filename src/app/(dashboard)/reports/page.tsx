@@ -13,6 +13,7 @@ import {
 } from 'recharts'
 import { toast } from 'sonner'
 import jsPDF from 'jspdf'
+import { savePdf } from '@/lib/native'
 import autoTable from 'jspdf-autotable'
 
 import { Button } from '@/components/ui/button'

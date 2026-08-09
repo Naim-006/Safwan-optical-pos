@@ -146,6 +146,13 @@
   .safe-top {
     padding-top: env(safe-area-inset-top, 0px);
   }
+  
+  /* Mobile header safe area */
+  @media (max-width: 768px) {
+    .safe-top {
+      padding-top: max(env(safe-area-inset-top, 0px), 8px);
+    }
+  }
 
   /* Thin, clean horizontal scrollbars for table wrappers */
   .scroll-x {
@@ -175,5 +182,62 @@
   /* Smooth scroll for anchor targets */
   .scroll-mt-safe {
     scroll-margin-top: 5rem;
+  }
+
+  /* Mobile-specific optimizations */
+  @media (max-width: 768px) {
+    /* Optimize touch targets */
+    button, a, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Better tap highlight */
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Smooth scrolling */
+    html, body {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+    }
+    
+    /* Prevent pull-to-refresh on mobile */
+    body {
+      overscroll-behavior: none;
+    }
+    
+    /* Optimize text rendering */
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+    
+    /* Better button press feedback */
+    button:active, a:active {
+      transform: scale(0.98);
+      transition: transform 0.1s ease;
+    }
+    
+    /* Hide scrollbars for cleaner mobile look */
+    ::-webkit-scrollbar {
+      width: 0px;
+      background: transparent;
+    }
+  }
+  
+  /* Mobile-first touch optimization */
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+  
+  /* Prevent text selection on UI elements */
+  .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
 }

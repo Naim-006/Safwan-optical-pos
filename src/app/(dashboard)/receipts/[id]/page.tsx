@@ -132,7 +132,77 @@ export default function ReceiptViewPage({ params }: { params: Promise<{ id: stri
     if (download) toast.success('PDF downloading...')
   }
 
-  const handlePDF = () => renderA4(true)
+  const handlePDF = async () => {
+    toast.loading('Generating PDF...')
+    
+    try {
+      const { jsPDF } = await import('jspdf')
+      const html2canvas = await import('html2canvas')
+      
+      // Create a hidden container with the receipt content
+      const container = document.createElement('div')
+      container.style.position = 'fixed'
+      container.style.left = '-9999px'
+      container.style.top = '0'
+      container.style.width = '210mm'
+      container.style.background = 'white'
+      container.style.padding = '10mm'
+      document.body.appendChild(container)
+      
+      const s = shop as any
+
+      const metaHtml = `<table class="info-table"><tr><td class="lbl">Date / التاريخ</td><td>${date}</td></tr><tr><td class="lbl">Receipt No / الرقم</td><td>${rec.invoice_number}</td></tr></table>`
+
+      const extraHtml = `<div class="highlight"><div class="hlbl">Received From / مستلم من</div><div class="hval">${rec.customer_name || 'Walk-in Customer'}</div></div><div class="highlight blue"><div class="hlbl">Amount in Figures (SAR) / المبلغ بالأرقام</div><div class="hval" style="color:#2563eb">${Number(rec.total_amount || 0).toFixed(2)}</div></div><div class="highlight purple"><div class="hlbl">Amount in Words / المبلغ بالكلمات</div><div class="hval" style="font-size:10pt">${numberToWords(Math.floor(rec.total_amount || 0))} Saudi Riyals</div></div><table class="info-table" style="margin-top:3mm"><tr><td class="lbl">Payment Method / طريقة الدفع</td><td>${(rec.payment_method || '').toUpperCase()}</td></tr><tr><td class="lbl">Payment Status / حالة الدفع</td><td>${(rec.payment_status || '').toUpperCase()}</td></tr>${rec.notes ? `<tr><td class="lbl">Notes / ملاحظات</td><td>${rec.notes}</td></tr>` : ''}</table>`
+
+      const footerHtml = `<div class="signatures"><div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">Manager / المدير</div></div><div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">Accountant / المحاسب</div></div></div><div class="signatures" style="margin-top:0"><div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">Received By / المستلم</div><div style="font-size:9pt;font-weight:600;margin-top:1mm">${rec.customer_name || ''}</div></div><div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">Signature / التوقيع</div></div></div><div class="fnote">Kingdom of Saudi Arabia — Jeddah 23436 | ${s?.vat || '300833099900003'} | Tel: ${s?.phone || '+966 05 0918 3807'}</div>`
+
+      const totalsHtml = `<div class="totals"><div class="tr grand"><span>Amount / المبلغ</span><span>${formatCurrency(rec.total_amount)}</span></div></div>`
+
+      const a4Html = generateA4Html({
+        shop: s, type: 'receipt', title: 'RECEIPT VOUCHER / سند قبض',
+        metaHtml, extraHtml, itemsHtml: '',
+        totalsHtml,
+        wordsHtml: '', qrHtml: `<div id="a4-qr"></div>`, footerHtml, barcodeNum,
+        dateTime: new Date().toLocaleString('en-SA', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true }),
+      })
+
+      container.innerHTML = a4Html
+      
+      // Generate QR code
+      const QRCode = (await import('qrcode')).default
+      const qrCanvas = await QRCode.toCanvas(qrUrl, { width: 320 })
+      const qrContainer = container.querySelector('#a4-qr')
+      if (qrContainer) {
+        qrCanvas.style.width = '42mm'
+        qrCanvas.style.height = '42mm'
+        qrContainer.appendChild(qrCanvas)
+      }
+
+      // Wait for images to load
+      await new Promise(resolve => setTimeout(resolve, 500))
+
+      // Generate PDF
+      const canvas = await html2canvas.default(container, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      })
+
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
+      const imgData = canvas.toDataURL('image/jpeg', 0.98)
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297)
+      pdf.save(`Receipt_${rec.invoice_number}.pdf`)
+
+      // Cleanup
+      document.body.removeChild(container)
+      toast.success('PDF downloaded successfully')
+    } catch (error) {
+      console.error('PDF generation error:', error)
+      toast.error('Failed to generate PDF')
+    }
+  }
+
   const handlePrintA4 = () => renderA4(false)
 
   return (
@@ -140,8 +210,8 @@ export default function ReceiptViewPage({ params }: { params: Promise<{ id: stri
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 print:hidden">
         <Button variant="ghost" className="w-full sm:w-auto" onClick={() => router.push('/receipts')}><ArrowLeft className="h-4 w-4 mr-2" /> Back</Button>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handlePrint}><Printer className="h-4 w-4 mr-2" /> Thermal Print</Button>
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handlePrintA4}><Printer className="h-4 w-4 mr-2" /> Print A4</Button>
+          <Button variant="outline" size="sm" className="hidden sm:flex flex-1 sm:flex-none" onClick={handlePrint}><Printer className="h-4 w-4 mr-2" /> Thermal Print</Button>
+          <Button variant="outline" size="sm" className="hidden sm:flex flex-1 sm:flex-none" onClick={handlePrintA4}><Printer className="h-4 w-4 mr-2" /> Print A4</Button>
           <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handlePDF}><Download className="h-4 w-4 mr-2" /> PDF (A4)</Button>
         </div>
       </div>

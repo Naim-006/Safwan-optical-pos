@@ -40,32 +40,32 @@ export default function ReceiptsPage() {
   })
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="space-y-3 pb-20 lg:pb-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('receipts.title')}</h1>
-          <p className="text-muted-foreground">{t('receipts.subtitle')}</p>
+          <h1 className="text-base sm:text-2xl font-bold tracking-tight">{t('receipts.title')}</h1>
+          <p className="text-xs text-muted-foreground hidden sm:block">{t('receipts.subtitle')}</p>
         </div>
-        <Button className="w-full sm:w-auto" onClick={() => router.push('/receipts/new')}>
-          <Plus className="h-4 w-4 mr-2" /> New Receipt
+        <Button className="w-full sm:w-auto h-8 text-xs" onClick={() => router.push('/receipts/new')}>
+          <Plus className="h-3 w-3 mr-1.5" /> New Receipt
         </Button>
       </div>
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-2 px-3">
           <BarcodeSearch
             value={search}
             onChange={setSearch}
-            placeholder="Search by receipt #, customer or scan barcode..."
+            placeholder="Search receipts..."
             onScan={(val) => setSearch(val)}
           />
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 pb-3">
           {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading...</div>
+            <div className="text-center py-8 text-muted-foreground text-xs">Loading...</div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Receipt className="h-12 w-12 mx-auto mb-3 opacity-20" />
-              <p>No receipts found</p>
+            <div className="text-center py-8 text-muted-foreground">
+              <Receipt className="h-8 w-8 mx-auto mb-2 opacity-20" />
+              <p className="text-xs">No receipts found</p>
             </div>
           ) : (
             <>
@@ -111,36 +111,36 @@ export default function ReceiptsPage() {
                 </Table>
               </div>
 
-              <div className="md:hidden space-y-3">
+              <div className="md:hidden space-y-2">
                 {filtered.map((inv: any) => (
                   <div
                     key={inv.id}
                     onClick={() => router.push(`/receipts/${inv.id}`)}
-                    className="rounded-xl border p-3.5 active:bg-accent/50 transition-colors cursor-pointer"
+                    className="rounded-lg border p-2.5 active:bg-accent/50 transition-colors cursor-pointer touch-manipulation"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="font-mono font-semibold text-sm truncate">{inv.invoice_number}</p>
-                        <p className="text-sm text-muted-foreground truncate mt-0.5">{inv.customer_name || 'Walk-in'}</p>
+                        <p className="font-mono font-semibold text-xs truncate">{inv.invoice_number}</p>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">{inv.customer_name || 'Walk-in'}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="font-bold text-sm">{formatCurrency(inv.total_amount)}</p>
-                        <Badge variant={inv.payment_status === 'paid' ? 'default' : 'destructive'} className="text-[10px]">
+                        <p className="font-bold text-xs">{formatCurrency(inv.total_amount)}</p>
+                        <Badge variant={inv.payment_status === 'paid' ? 'default' : 'destructive'} className="text-[9px]">
                           {inv.payment_status}
                         </Badge>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t">
-                      <span className="text-xs text-muted-foreground">
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t">
+                      <span className="text-[10px] text-muted-foreground">
                         {new Date(inv.created_at).toLocaleDateString()}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-7 w-7"
                         onClick={(e) => { e.stopPropagation(); setDeleteTarget(inv) }}
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Trash2 className="h-3 w-3 text-destructive" />
                       </Button>
                     </div>
                   </div>

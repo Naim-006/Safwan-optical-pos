@@ -13,6 +13,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { useInvoices, useDeleteInvoice } from '@/hooks/use-data'
 import { formatCurrency } from '@/lib/utils'
+import { cn } from '@/lib/utils'
+import { saveFile } from '@/lib/native'
 import { useLang } from '@/contexts/lang-provider'
 import { BarcodeSearch } from '@/components/barcode-search'
 
@@ -66,38 +68,38 @@ export default function InvoicesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="space-y-3 pb-20 lg:pb-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('invoices.title')}</h1>
-          <p className="text-muted-foreground">{t('invoices.subtitle')}</p>
+          <h1 className="text-base sm:text-2xl font-bold tracking-tight">{t('invoices.title')}</h1>
+          <p className="text-xs text-muted-foreground hidden sm:block">{t('invoices.subtitle')}</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={exportCSV}>
-            <Download className="h-4 w-4 mr-2" /> Export CSV
+        <div className="flex gap-1.5">
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none h-8 text-xs" onClick={exportCSV}>
+            <Download className="h-3 w-3 mr-1.5" /> Export
           </Button>
-          <Button className="flex-1 sm:flex-none" onClick={() => window.location.href = '/invoices/new'}>
-            <Plus className="h-4 w-4 mr-2" /> New Invoice
+          <Button className="flex-1 sm:flex-none h-8 text-xs" onClick={() => window.location.href = '/invoices/new'}>
+            <Plus className="h-3 w-3 mr-1.5" /> New
           </Button>
         </div>
       </div>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-2 px-3">
           <BarcodeSearch
             value={search}
             onChange={setSearch}
-            placeholder="Search by invoice #, customer name, phone or scan barcode..."
+            placeholder="Search invoices..."
             onScan={(val) => setSearch(val)}
           />
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-3 pb-3">
           {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading...</div>
+            <div className="text-center py-8 text-muted-foreground text-xs">Loading...</div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileText className="h-12 w-12 mx-auto mb-3 opacity-20" />
-              <p>No invoices found</p>
+            <div className="text-center py-8 text-muted-foreground">
+              <FileText className="h-8 w-8 mx-auto mb-2 opacity-20" />
+              <p className="text-xs">No invoices found</p>
             </div>
           ) : (
             <>
@@ -166,43 +168,42 @@ export default function InvoicesPage() {
               </div>
 
               {/* Mobile cards */}
-              <div className="md:hidden space-y-3">
+              <div className="md:hidden space-y-2">
                 {filtered.map((inv) => (
                   <div
                     key={inv.id}
                     onClick={() => window.location.href = `/invoices/${inv.id}`}
-                    className="rounded-xl border p-3.5 active:bg-accent/50 transition-colors cursor-pointer"
+                    className="rounded-lg border p-2.5 active:bg-accent/50 transition-colors cursor-pointer touch-manipulation"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="font-mono font-semibold text-sm truncate">{inv.invoice_number}</p>
-                        <p className="text-sm text-muted-foreground truncate mt-0.5">
+                        <p className="font-mono font-semibold text-xs truncate">{inv.invoice_number}</p>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">
                           {inv.customer_name || 'Walk-in'}
-                          {inv.customer_phone && ` · ${inv.customer_phone}`}
                         </p>
                       </div>
-                      <Badge variant="secondary" className="text-[10px] shrink-0">
+                      <Badge variant="secondary" className="text-[9px] shrink-0">
                         {inv.invoice_type.toUpperCase()}
                       </Badge>
                     </div>
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t">
-                      <div className="flex items-center gap-2">
-                        <Badge className={statusColors[inv.payment_status] || ''}>
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t">
+                      <div className="flex items-center gap-1.5">
+                        <Badge className={cn(statusColors[inv.payment_status] || '', 'text-[9px]')}>
                           {inv.payment_status}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[10px] text-muted-foreground">
                           {new Date(inv.created_at).toLocaleDateString()}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm">{formatCurrency(inv.total_amount)}</span>
+                        <span className="font-bold text-xs">{formatCurrency(inv.total_amount)}</span>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-7 w-7"
                           onClick={(e) => { e.stopPropagation(); setDeleteTarget(inv) }}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-3 w-3 text-destructive" />
                         </Button>
                       </div>
                     </div>
@@ -211,15 +212,15 @@ export default function InvoicesPage() {
               </div>
 
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-4">
-                  <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>
-                    <ChevronLeft className="h-4 w-4" />
+                <div className="flex items-center justify-center gap-2 mt-3">
+                  <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)} className="h-8">
+                    <ChevronLeft className="h-3 w-3" />
                   </Button>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     {page} / {totalPages}
                   </span>
-                  <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(page + 1)}>
-                    <ChevronRight className="h-4 w-4" />
+                  <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(page + 1)} className="h-8">
+                    <ChevronRight className="h-3 w-3" />
                   </Button>
                 </div>
               )}

@@ -18,6 +18,7 @@ import { useSearchCustomers, useCreateInvoice, useShopSettings } from '@/hooks/u
 import { formatCurrency, numberToWords } from '@/lib/utils'
 import { generateNextNumber } from '@/lib/supabase/data'
 import { createClient } from '@/lib/supabase/client'
+import { openPrintDoc } from '@/lib/native'
 import { useLang } from '@/contexts/lang-provider'
 import { shopHeaderReceipt } from '@/lib/shop-template'
 

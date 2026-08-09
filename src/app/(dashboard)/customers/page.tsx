@@ -13,6 +13,7 @@ import * as XLSX from 'xlsx'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { openPrintDoc, saveFile } from '@/lib/native'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
@@ -246,22 +247,22 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 pb-20 lg:pb-0">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('customers.title')}</h1>
-          <p className="text-sm text-muted-foreground">{displayData.total} customers</p>
+          <h1 className="text-base sm:text-2xl font-bold tracking-tight">{t('customers.title')}</h1>
+          <p className="text-xs text-muted-foreground hidden sm:block">{displayData.total} customers</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportExcel}>
-            <FileSpreadsheet className="h-4 w-4 mr-1.5" /> Export
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-8 text-xs hidden sm:flex">
+            <FileSpreadsheet className="h-3 w-3 mr-1.5" /> Export
           </Button>
-          <Button variant="outline" size="sm" onClick={handleImportExcel}>
-            <Upload className="h-4 w-4 mr-1.5" /> Import
+          <Button variant="outline" size="sm" onClick={handleImportExcel} className="h-8 text-xs hidden sm:flex">
+            <Upload className="h-3 w-3 mr-1.5" /> Import
           </Button>
-          <Button size="sm" onClick={openAdd}>
-            <Plus className="h-4 w-4 mr-1.5" /> Add Customer
+          <Button size="sm" onClick={openAdd} className="h-8 text-xs">
+            <Plus className="h-3 w-3 mr-1.5" /> Add
           </Button>
         </div>
       </div>
@@ -269,17 +270,17 @@ export default function CustomersPage() {
       {/* Toolbar */}
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search by name or phone..."
-            className="pl-9 h-9"
+            placeholder="Search customers..."
+            className="pl-9 h-8 text-sm"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5">
           <Select value={sortBy} onValueChange={(v) => { if (v) { setSortBy(v); setPage(1) } }}>
-            <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[110px] h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="newest">Newest</SelectItem>
               <SelectItem value="oldest">Oldest</SelectItem>
@@ -288,7 +289,7 @@ export default function CustomersPage() {
             </SelectContent>
           </Select>
           <Select value={String(perPage)} onValueChange={(v) => { if (v) { setPerPage(Number(v)); setPage(1) } }}>
-            <SelectTrigger className="w-[70px] h-9 text-xs"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-[60px] h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent><SelectItem value="20">20</SelectItem><SelectItem value="50">50</SelectItem><SelectItem value="100">100</SelectItem></SelectContent>
           </Select>
         </div>
@@ -298,11 +299,11 @@ export default function CustomersPage() {
       <Card>
         <CardContent className="p-1 sm:p-2">
           {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground text-sm">Loading...</div>
+            <div className="text-center py-8 text-muted-foreground text-xs">Loading...</div>
           ) : displayData.list.length === 0 ? (
-            <div className="flex flex-col items-center py-12 text-muted-foreground">
-              <User className="h-10 w-10 mb-2 opacity-20" />
-              <p className="text-sm">{search ? 'No customers match your search' : 'No customers yet'}</p>
+            <div className="flex flex-col items-center py-8 text-muted-foreground">
+              <User className="h-8 w-8 mb-2 opacity-20" />
+              <p className="text-xs">{search ? 'No customers match your search' : 'No customers yet'}</p>
             </div>
           ) : (
             <>
@@ -345,19 +346,19 @@ export default function CustomersPage() {
                   <div
                     key={customer.id}
                     onClick={() => openView(customer)}
-                    className="flex items-center gap-3 px-1.5 py-2.5 cursor-pointer active:bg-accent/50"
+                    className="flex items-center gap-2 px-1.5 py-2 cursor-pointer active:bg-accent/50 touch-manipulation"
                   >
-                    <Avatar className="h-9 w-9 shrink-0"><AvatarFallback className="text-[10px]">{getInitials(customer.name)}</AvatarFallback></Avatar>
+                    <Avatar className="h-8 w-8 shrink-0"><AvatarFallback className="text-[10px]">{getInitials(customer.name)}</AvatarFallback></Avatar>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <p className="font-medium text-sm truncate">{customer.name}</p>
-                        {customer.right_sphere != null && <Badge variant="outline" className="text-[10px] border-purple-300 text-purple-600 shrink-0">Rx</Badge>}
+                      <div className="flex items-center gap-1">
+                        <p className="font-medium text-xs truncate">{customer.name}</p>
+                        {customer.right_sphere != null && <Badge variant="outline" className="text-[9px] border-purple-300 text-purple-600 shrink-0">Rx</Badge>}
                       </div>
-                      <p className="text-xs text-muted-foreground truncate">{customer.phone || 'No phone'}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{customer.phone || 'No phone'}</p>
                     </div>
                     <div className="flex gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(customer)}><Edit className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteTarget(customer)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(customer)}><Edit className="h-3 w-3" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteTarget(customer)}><Trash2 className="h-3 w-3 text-destructive" /></Button>
                     </div>
                   </div>
                 ))}
@@ -365,9 +366,9 @@ export default function CustomersPage() {
 
               {displayData.pages > 1 && (
                 <div className="flex items-center justify-center gap-2 py-2">
-                  <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
-                  <span className="text-sm text-muted-foreground">{page} / {displayData.pages}</span>
-                  <Button variant="outline" size="sm" disabled={page >= displayData.pages} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
+                  <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)} className="h-8"><ChevronLeft className="h-3 w-3" /></Button>
+                  <span className="text-xs text-muted-foreground">{page} / {displayData.pages}</span>
+                  <Button variant="outline" size="sm" disabled={page >= displayData.pages} onClick={() => setPage(page + 1)} className="h-8"><ChevronRight className="h-3 w-3" /></Button>
                 </div>
               )}
             </>

@@ -123,8 +123,6 @@ export default function DashboardLayout({
         )}
       >
         <div className="flex h-14 items-center gap-2 border-b px-4">
-          <Glasses className="h-6 w-6 text-primary" />
-          <span className="font-bold text-lg">{shop?.shopName || 'Safwan Opticals'}</span>
           <Button
             variant="ghost"
             size="icon"
@@ -168,17 +166,23 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
-        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:px-6">
+        <header className="flex h-14 items-center gap-2 sm:gap-4 border-b bg-card px-3 sm:px-4 lg:px-6 safe-top">
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden"
+            className="lg:hidden h-9 w-9"
             onClick={() => setSidebarOpen(true)}
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-4 w-4" />
           </Button>
 
-          <div className="flex-1" />
+          {/* Shop name and icon - mobile only */}
+          <div className="flex items-center gap-2 flex-1 lg:hidden">
+            <Glasses className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold text-sm truncate">{shop?.shopName || 'Safwan Opticals'}</span>
+          </div>
+
+          <div className="flex-1 lg:flex-none" />
 
           {/* Theme toggle */}
           <DropdownMenu>
@@ -213,7 +217,7 @@ export default function DashboardLayout({
               <Avatar className="h-8 w-8">
                 <AvatarFallback>SA</AvatarFallback>
               </Avatar>
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              <ChevronDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuGroup>
@@ -231,18 +235,19 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
+        <main className="flex-1 overflow-auto p-2 sm:p-4 lg:p-6 pb-22 lg:pb-6">
           {children}
         </main>
       </div>
 
       {/* Mobile bottom navigation */}
-      <nav className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-stretch justify-around border-t bg-card/95 backdrop-blur lg:hidden safe-bottom">
+      <nav className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-stretch justify-around border-t bg-gradient-to-t from-card via-card to-card/95 backdrop-blur-xl supports-[backdrop-filter]:bg-card/80 lg:hidden safe-bottom shadow-2xl shadow-black/5">
         {[
           { name: t('common.dashboard'), href: '/', icon: LayoutDashboard },
           { name: t('common.pos'), href: '/pos', icon: ShoppingCart },
           { name: t('common.invoices'), href: '/invoices', icon: FileText },
           { name: t('common.customers'), href: '/customers', icon: Users },
+          { name: t('common.finance'), href: '/finance', icon: Wallet },
         ].map((item) => {
           const isActive = pathname === item.href ||
             (item.href !== '/' && pathname.startsWith(item.href))
@@ -252,23 +257,28 @@ export default function DashboardLayout({
               href={item.href}
               onClick={() => setSidebarOpen(false)}
               className={cn(
-                'flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors',
+                'flex flex-1 flex-col items-center justify-center gap-1 py-2 transition-all duration-300 relative group',
                 isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <item.icon className={cn('h-5 w-5', isActive && 'scale-110')} />
-              <span className="truncate max-w-full px-1">{item.name}</span>
+              {isActive && (
+                <>
+                  <span className="absolute top-0 h-1 w-10 bg-gradient-to-r from-primary/50 via-primary to-primary/50 rounded-full shadow-lg shadow-primary/30" />
+                  <span className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent rounded-lg" />
+                </>
+              )}
+              <div className={cn(
+                'relative rounded-2xl p-2.5 transition-all duration-300',
+                isActive 
+                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25 scale-110' 
+                  : 'group-hover:bg-accent group-hover:scale-105'
+              )}>
+                <item.icon className={cn('h-5 w-5', isActive && 'animate-pulse')} />
+              </div>
+              <span className="text-[11px] font-semibold truncate max-w-full px-1">{item.name}</span>
             </Link>
           )
         })}
-        <button
-          type="button"
-          onClick={() => setSidebarOpen(true)}
-          className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground"
-        >
-          <Menu className="h-5 w-5" />
-          <span className="truncate max-w-full px-1">{t('common.system')}</span>
-        </button>
       </nav>
     </div>
   )
