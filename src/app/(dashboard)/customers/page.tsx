@@ -1,19 +1,19 @@
 'use client'
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import {
   Plus, Search, Trash2, Edit, User, ChevronLeft, ChevronRight,
-  AlertTriangle, FileSpreadsheet, Printer, ShoppingBag, DollarSign, Clock,
-  Phone, Mail, MapPin, Calendar, Eye,
+  AlertTriangle, FileSpreadsheet, Printer, Phone, Mail, MapPin,
+  Calendar, Eye, ChevronDown, ChevronUp, Upload,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import * as XLSX from 'xlsx'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -23,7 +23,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
 import { customerSchema, type CustomerInput } from '@/lib/validators'
 import { useCustomers, useCreateCustomer, useUpdateCustomer, useDeleteCustomer } from '@/hooks/use-data'
 import { useLang } from '@/contexts/lang-provider'
@@ -36,6 +35,17 @@ function getInitials(name: string) {
   return name.split(' ').map((n: any) => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
+const EYE_TYPES = ['Single Vision', 'Bifocal', 'Progressive', 'Office Lens', 'Other']
+const LENS_TYPES = ['CR-39', 'Polycarbonate', 'BlueCut', 'Photochromic', 'Hi-Index', 'Other']
+
+const emptyForm: CustomerInput = {
+  name: '', phone: '', email: '', address: '', dateOfBirth: '',
+  eyeType: '', lensType: '',
+  rightSphere: 0, rightCylinder: 0, rightAxis: 0, rightAdd: 0,
+  leftSphere: 0, leftCylinder: 0, leftAxis: 0, leftAdd: 0,
+  ipd: 0, notes: '',
+}
+
 export default function CustomersPage() {
   const [search, setSearch] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -44,12 +54,12 @@ export default function CustomersPage() {
   const [viewCustomer, setViewCustomer] = useState<CustRow | null>(null)
   const [duplicateWarning, setDuplicateWarning] = useState<CustRow | null>(null)
   const [pendingCustData, setPendingCustData] = useState<CustomerInput | null>(null)
+  const [showRx, setShowRx] = useState(false)
   const [page, setPage] = useState(1)
   const [sortBy, setSortBy] = useState('newest')
   const [perPage, setPerPage] = useState(20)
   const { t } = useLang()
 
-  // ─── Customer data ───
   const { data: customers = [], isLoading } = useCustomers()
   const createMutation = useCreateCustomer()
   const updateMutation = useUpdateCustomer()
@@ -85,21 +95,26 @@ export default function CustomersPage() {
       }, () => setInvoicesLoading(false))
   }, [viewCustomer])
 
-  // ─── Form ───
   const {
     register, handleSubmit, reset, setValue, getValues,
   } = useForm<CustomerInput>({
     resolver: zodResolver(customerSchema) as any,
-    defaultValues: { name: '', phone: '', email: '', address: '', eyeType: '', lensType: '', notes: '' },
+    defaultValues: emptyForm,
   })
+
+  const openView = useCallback((c: CustRow) => {
+    setCustInvoices([])
+    setCustStats({ total: 0, paid: 0, count: 0, last: null })
+    setViewCustomer(c)
+  }, [])
 
   const openEdit = useCallback((c: CustRow) => {
     setEditingCustomer(c)
-    // Map DB snake_case fields to form camelCase
     const rxMap: Record<string, string> = {
       right_sphere: 'rightSphere', right_cylinder: 'rightCylinder', right_axis: 'rightAxis', right_add: 'rightAdd',
       left_sphere: 'leftSphere', left_cylinder: 'leftCylinder', left_axis: 'leftAxis', left_add: 'leftAdd',
     }
+    reset(emptyForm)
     setValue('name', c.name)
     setValue('phone', c.phone || '')
     setValue('email', c.email || '')
@@ -110,14 +125,18 @@ export default function CustomersPage() {
     setValue('eyeType', c.eye_type || '')
     setValue('lensType', c.lens_type || '')
     setValue('notes', c.notes || '')
+    setShowRx(false)
     setDialogOpen(true)
-  }, [setValue])
+  }, [reset, setValue])
 
   const openAdd = useCallback(() => {
     setEditingCustomer(null)
-    reset({ name: '', phone: '', email: '', address: '', notes: '' })
+    reset(emptyForm)
+    setShowRx(false)
     setDialogOpen(true)
   }, [reset])
+
+  const num = (v: any) => (v === null || v === undefined || Number.isNaN(v) ? 0 : v)
 
   const onSubmit = (data: CustomerInput) => {
     if (!editingCustomer && data.name && data.phone) {
@@ -127,11 +146,11 @@ export default function CustomersPage() {
     const payload: Record<string, any> = {
       name: data.name, phone: data.phone || null, email: data.email || null, address: data.address || null,
       date_of_birth: data.dateOfBirth || null,
-      right_sphere: data.rightSphere ?? 0, right_cylinder: data.rightCylinder ?? 0,
-      right_axis: data.rightAxis ?? 0, right_add: data.rightAdd ?? 0,
-      left_sphere: data.leftSphere ?? 0, left_cylinder: data.leftCylinder ?? 0,
-      left_axis: data.leftAxis ?? 0, left_add: data.leftAdd ?? 0,
-      ipd: data.ipd ?? 0, eye_type: data.eyeType || null, lens_type: data.lensType || null, notes: data.notes || null,
+      right_sphere: num(data.rightSphere), right_cylinder: num(data.rightCylinder),
+      right_axis: num(data.rightAxis), right_add: num(data.rightAdd),
+      left_sphere: num(data.leftSphere), left_cylinder: num(data.leftCylinder),
+      left_axis: num(data.leftAxis), left_add: num(data.leftAdd),
+      ipd: num(data.ipd), eye_type: data.eyeType || null, lens_type: data.lensType || null, notes: data.notes || null,
     }
     if (editingCustomer) updateMutation.mutate({ id: editingCustomer.id, updates: payload })
     else createMutation.mutate(payload)
@@ -155,8 +174,9 @@ export default function CustomersPage() {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
 
-    const pages = Math.ceil(list.length / perPage)
-    const paged = list.slice((page - 1) * perPage, page * perPage)
+    const pages = Math.max(1, Math.ceil(list.length / perPage))
+    const safePage = Math.min(page, pages)
+    const paged = list.slice((safePage - 1) * perPage, safePage * perPage)
     return { list: paged, total: list.length, pages }
   }, [customers, search, sortBy, page, perPage])
 
@@ -226,69 +246,91 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('customers.title')}</h1>
-          <p className="text-muted-foreground">{displayData.total} customers</p>
+          <p className="text-sm text-muted-foreground">{displayData.total} customers</p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handleExportExcel}>
-            <FileSpreadsheet className="h-4 w-4 mr-2" /> Export Excel
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleExportExcel}>
+            <FileSpreadsheet className="h-4 w-4 mr-1.5" /> Export
           </Button>
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handleImportExcel}>
-            <FileSpreadsheet className="h-4 w-4 mr-2" /> Import Excel
+          <Button variant="outline" size="sm" onClick={handleImportExcel}>
+            <Upload className="h-4 w-4 mr-1.5" /> Import
           </Button>
-          <Button onClick={openAdd} className="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-700"><Plus className="h-4 w-4 mr-2" /> Add</Button>
+          <Button size="sm" onClick={openAdd}>
+            <Plus className="h-4 w-4 mr-1.5" /> Add Customer
+          </Button>
         </div>
       </div>
 
-      <Card className="border-t-2 border-t-purple-500 shadow-sm">
-        <CardHeader className="pb-3 bg-gradient-to-b from-purple-50/80 to-transparent dark:from-purple-950/30 dark:to-transparent rounded-t-xl">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search by name or phone..." className="pl-9" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
-            </div>
-            <div className="flex gap-2">
-              <Select value={sortBy} onValueChange={(v) => { if (v) { setSortBy(v); setPage(1) } }}>
-                <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest</SelectItem>
-                  <SelectItem value="oldest">Oldest</SelectItem>
-                  <SelectItem value="name">Name A-Z</SelectItem>
-                  <SelectItem value="name-desc">Name Z-A</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={String(perPage)} onValueChange={(v) => { if (v) { setPerPage(Number(v)); setPage(1) } }}>
-                <SelectTrigger className="w-[70px] h-9 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="20">20</SelectItem><SelectItem value="50">50</SelectItem><SelectItem value="100">100</SelectItem></SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
+      {/* Toolbar */}
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or phone..."
+            className="pl-9 h-9"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+          />
+        </div>
+        <div className="flex gap-2">
+          <Select value={sortBy} onValueChange={(v) => { if (v) { setSortBy(v); setPage(1) } }}>
+            <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest</SelectItem>
+              <SelectItem value="oldest">Oldest</SelectItem>
+              <SelectItem value="name">Name A-Z</SelectItem>
+              <SelectItem value="name-desc">Name Z-A</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={String(perPage)} onValueChange={(v) => { if (v) { setPerPage(Number(v)); setPage(1) } }}>
+            <SelectTrigger className="w-[70px] h-9 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="20">20</SelectItem><SelectItem value="50">50</SelectItem><SelectItem value="100">100</SelectItem></SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* List */}
+      <Card>
+        <CardContent className="p-1 sm:p-2">
           {isLoading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading...</div>
+            <div className="text-center py-12 text-muted-foreground text-sm">Loading...</div>
           ) : displayData.list.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground"><User className="h-12 w-12 mx-auto mb-3 opacity-20" /><p>No customers</p></div>
+            <div className="flex flex-col items-center py-12 text-muted-foreground">
+              <User className="h-10 w-10 mb-2 opacity-20" />
+              <p className="text-sm">{search ? 'No customers match your search' : 'No customers yet'}</p>
+            </div>
           ) : (
             <>
               {/* Desktop table */}
-              <div className="hidden md:block scroll-x -mx-1 px-1">
-                <Table className="min-w-[640px]">
-                  <TableHeader><TableRow><TableHead>Customer</TableHead><TableHead>Phone</TableHead><TableHead>Email</TableHead><TableHead className="w-[50px]">Rx</TableHead></TableRow></TableHeader>
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="text-xs font-medium text-muted-foreground">Customer</TableHead>
+                      <TableHead className="text-xs font-medium text-muted-foreground">Phone</TableHead>
+                      <TableHead className="w-20" />
+                    </TableRow>
+                  </TableHeader>
                   <TableBody>
                     {displayData.list.map((customer: any) => (
-                      <TableRow key={customer.id} className="cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/20" onClick={() => { setCustInvoices([]); setCustStats({ total: 0, paid: 0, count: 0, last: null }); setViewCustomer(customer) }}>
-                        <TableCell><div className="flex items-center gap-2.5"><Avatar className="h-7 w-7"><AvatarFallback className="text-[10px]">{getInitials(customer.name)}</AvatarFallback></Avatar><span className="font-medium text-sm">{customer.name}</span></div></TableCell>
-                        <TableCell className="text-muted-foreground text-sm">{customer.phone || '-'}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm">{customer.email || '-'}</TableCell>
-                        <TableCell>{customer.right_sphere != null ? <Badge variant="outline" className="text-[10px] border-purple-300 text-purple-600">Rx</Badge> : <span className="text-muted-foreground text-xs">-</span>}</TableCell>
+                      <TableRow key={customer.id} className="cursor-pointer" onClick={() => openView(customer)}>
                         <TableCell>
-                          <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(customer)}><Edit className="h-3.5 w-3.5" /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteTarget(customer)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Avatar className="h-8 w-8 shrink-0"><AvatarFallback className="text-[10px]">{getInitials(customer.name)}</AvatarFallback></Avatar>
+                            <span className="font-medium text-sm truncate">{customer.name}</span>
+                            {customer.right_sphere != null && <Badge variant="outline" className="text-[10px] border-purple-300 text-purple-600 shrink-0">Rx</Badge>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{customer.phone || '-'}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-0.5 justify-end" onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon-sm" onClick={() => openEdit(customer)}><Edit className="h-3.5 w-3.5" /></Button>
+                            <Button variant="ghost" size="icon-sm" onClick={() => setDeleteTarget(customer)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -297,38 +339,35 @@ export default function CustomersPage() {
                 </Table>
               </div>
 
-              {/* Mobile cards */}
-              <div className="md:hidden space-y-3">
+              {/* Mobile list */}
+              <div className="md:hidden divide-y">
                 {displayData.list.map((customer: any) => (
                   <div
                     key={customer.id}
-                    onClick={() => { setCustInvoices([]); setCustStats({ total: 0, paid: 0, count: 0, last: null }); setViewCustomer(customer) }}
-                    className="rounded-xl border p-3.5 active:bg-accent/50 transition-colors cursor-pointer"
+                    onClick={() => openView(customer)}
+                    className="flex items-center gap-3 px-1.5 py-2.5 cursor-pointer active:bg-accent/50"
                   >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 shrink-0"><AvatarFallback>{getInitials(customer.name)}</AvatarFallback></Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-sm truncate">{customer.name}</p>
-                          {customer.right_sphere != null && <Badge variant="outline" className="text-[10px] border-purple-300 text-purple-600 shrink-0">Rx</Badge>}
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {customer.phone || 'No phone'}{customer.email ? ` · ${customer.email}` : ''}
-                        </p>
+                    <Avatar className="h-9 w-9 shrink-0"><AvatarFallback className="text-[10px]">{getInitials(customer.name)}</AvatarFallback></Avatar>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-medium text-sm truncate">{customer.name}</p>
+                        {customer.right_sphere != null && <Badge variant="outline" className="text-[10px] border-purple-300 text-purple-600 shrink-0">Rx</Badge>}
                       </div>
-                      <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(customer)}><Edit className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteTarget(customer)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{customer.phone || 'No phone'}</p>
+                    </div>
+                    <div className="flex gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(customer)}><Edit className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteTarget(customer)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                     </div>
                   </div>
                 ))}
               </div>
+
               {displayData.pages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-3">
-                  <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
+                <div className="flex items-center justify-center gap-2 py-2">
+                  <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>
                   <span className="text-sm text-muted-foreground">{page} / {displayData.pages}</span>
-                  <Button variant="outline" size="sm" disabled={page === displayData.pages} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
+                  <Button variant="outline" size="sm" disabled={page >= displayData.pages} onClick={() => setPage(page + 1)}><ChevronRight className="h-4 w-4" /></Button>
                 </div>
               )}
             </>
@@ -338,69 +377,80 @@ export default function CustomersPage() {
 
       {/* View Customer Dialog — lazy loaded invoices */}
       <Dialog open={!!viewCustomer} onOpenChange={() => setViewCustomer(null)}>
-        <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
           {viewCustomer && (
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-3">
-                  <Avatar className="h-9 w-9"><AvatarFallback>{getInitials(viewCustomer.name)}</AvatarFallback></Avatar>
-                  <div><div>{viewCustomer.name}</div>{viewCustomer.phone && <div className="text-sm font-normal text-muted-foreground">{viewCustomer.phone}</div>}</div>
+                  <Avatar className="h-9 w-9 shrink-0"><AvatarFallback>{getInitials(viewCustomer.name)}</AvatarFallback></Avatar>
+                  <div className="min-w-0"><div className="truncate">{viewCustomer.name}</div>{viewCustomer.phone && <div className="text-sm font-normal text-muted-foreground truncate">{viewCustomer.phone}</div>}</div>
                 </DialogTitle>
               </DialogHeader>
 
-              {/* Stats Cards */}
-              <div className="grid grid-cols-4 gap-2 mb-3">
-                {[{ label: 'Total Spent', icon: DollarSign, color: 'text-blue-600', value: formatCurrency(custStats.total) },
-                  { label: 'Purchases', icon: ShoppingBag, color: 'text-green-600', value: custStats.count },
-                  { label: 'Paid', icon: ShoppingBag, color: 'text-emerald-600', value: formatCurrency(custStats.paid) },
-                  { label: 'Last', icon: Clock, color: 'text-purple-600', value: custStats.last ? new Date(custStats.last.created_at).toLocaleDateString() : '-' },
+              {/* Light stats strip */}
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label: 'Total', value: formatCurrency(custStats.total) },
+                  { label: 'Invoices', value: String(custStats.count) },
+                  { label: 'Paid', value: formatCurrency(custStats.paid) },
+                  { label: 'Last', value: custStats.last ? new Date(custStats.last.created_at).toLocaleDateString() : '-' },
                 ].map((s, i) => (
-                  <Card key={i} className="py-2"><CardContent className="p-1.5 text-center">
-                    <s.icon className={`h-3.5 w-3.5 ${s.color} mx-auto mb-0.5`} />
-                    <div className="text-sm font-bold truncate">{s.value}</div>
-                    <div className="text-[9px] text-muted-foreground">{s.label}</div>
-                  </CardContent></Card>
+                  <div key={i} className="rounded-lg bg-muted/60 p-2 text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide truncate">{s.label}</p>
+                    <p className="text-sm font-bold truncate">{s.value}</p>
+                  </div>
                 ))}
               </div>
 
               {invoicesLoading ? (
-                <div className="text-center py-6 text-muted-foreground text-sm">Loading history...</div>
+                <p className="text-center py-6 text-sm text-muted-foreground">Loading history...</p>
               ) : (
                 <Tabs defaultValue="history">
                   <TabsList className="w-full">
-                    <TabsTrigger value="history" className="flex-1">Purchase History</TabsTrigger>
-                    <TabsTrigger value="details" className="flex-1">Details</TabsTrigger>
-                    <TabsTrigger value="prescription" className="flex-1">Prescription</TabsTrigger>
+                    <TabsTrigger value="history" className="flex-1 text-xs">History</TabsTrigger>
+                    <TabsTrigger value="details" className="flex-1 text-xs">Details</TabsTrigger>
+                    <TabsTrigger value="rx" className="flex-1 text-xs">Rx</TabsTrigger>
                   </TabsList>
+
                   <TabsContent value="history" className="pt-3">
-                    <div className="mb-2"><Button variant="outline" size="sm" onClick={handlePrintHistory}><Printer className="h-3.5 w-3.5 mr-1.5" /> Print History</Button></div>
+                    <div className="flex justify-end mb-1">
+                      <Button variant="ghost" size="sm" onClick={handlePrintHistory}><Printer className="h-3.5 w-3.5 mr-1.5" /> Print</Button>
+                    </div>
                     {custInvoices.length > 0 ? (
-                      <Table>
-                        <TableHeader><TableRow><TableHead>Invoice #</TableHead><TableHead>Date</TableHead><TableHead className="text-right">Total</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
-                        <TableBody>
-                          {custInvoices.map((inv: any) => (
-                            <TableRow key={inv.id}>
-                              <TableCell className="font-mono text-xs">{inv.invoice_number}</TableCell>
-                              <TableCell className="text-xs">{new Date(inv.created_at).toLocaleDateString()}</TableCell>
-                              <TableCell className="text-right text-sm font-medium">{formatCurrency(inv.total_amount)}</TableCell>
-                              <TableCell><Badge variant={inv.payment_status === 'paid' ? 'default' : 'destructive'} className="text-[10px]">{inv.payment_status}</Badge></TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                      <div className="scroll-x -mx-1 px-1">
+                        <Table className="min-w-[360px]">
+                          <TableHeader><TableRow><TableHead className="text-xs">Invoice</TableHead><TableHead className="text-xs">Date</TableHead><TableHead className="text-right text-xs">Total</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+                          <TableBody>
+                            {custInvoices.map((inv: any) => (
+                              <TableRow key={inv.id}>
+                                <TableCell className="font-mono text-xs">{inv.invoice_number}</TableCell>
+                                <TableCell className="text-xs">{new Date(inv.created_at).toLocaleDateString()}</TableCell>
+                                <TableCell className="text-right text-sm font-medium">{formatCurrency(inv.total_amount)}</TableCell>
+                                <TableCell><Badge variant={inv.payment_status === 'paid' ? 'default' : 'destructive'} className="text-[10px]">{inv.payment_status}</Badge></TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     ) : <p className="text-center py-6 text-sm text-muted-foreground">No purchase history</p>}
                   </TabsContent>
-                  <TabsContent value="details" className="space-y-3 pt-3">
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" />{viewCustomer.phone || '-'}</div>
-                      <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" />{viewCustomer.email || '-'}</div>
-                      <div className="flex items-center gap-2 col-span-2"><MapPin className="h-4 w-4 text-muted-foreground" />{viewCustomer.address || '-'}</div>
-                      {(viewCustomer.eye_type || viewCustomer.lens_type) && <div className="flex items-center gap-2 col-span-2"><Eye className="h-4 w-4 text-muted-foreground" />{[viewCustomer.eye_type, viewCustomer.lens_type].filter(Boolean).join(' / ')}</div>}
-                      {viewCustomer.date_of_birth && <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground" />{new Date(viewCustomer.date_of_birth).toLocaleDateString()}</div>}
+
+                  <TabsContent value="details" className="space-y-2.5 pt-3 text-sm">
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
+                      <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-4 w-4 shrink-0" /><span className="truncate">{viewCustomer.phone || '-'}</span></div>
+                      <div className="flex items-center gap-2 text-muted-foreground"><Mail className="h-4 w-4 shrink-0" /><span className="truncate">{viewCustomer.email || '-'}</span></div>
+                      <div className="flex items-center gap-2 col-span-2 text-muted-foreground"><MapPin className="h-4 w-4 shrink-0" /><span className="truncate">{viewCustomer.address || '-'}</span></div>
+                      {(viewCustomer.eye_type || viewCustomer.lens_type) && (
+                        <div className="flex items-center gap-2 col-span-2 text-muted-foreground"><Eye className="h-4 w-4 shrink-0" /><span className="truncate">{[viewCustomer.eye_type, viewCustomer.lens_type].filter(Boolean).join(' / ')}</span></div>
+                      )}
+                      {viewCustomer.date_of_birth && (
+                        <div className="flex items-center gap-2 text-muted-foreground"><Calendar className="h-4 w-4 shrink-0" /><span>{new Date(viewCustomer.date_of_birth).toLocaleDateString()}</span></div>
+                      )}
                     </div>
-                    {viewCustomer.notes && <div className="text-sm text-muted-foreground pt-2 border-t">{viewCustomer.notes}</div>}
+                    {viewCustomer.notes && <div className="pt-2 text-muted-foreground border-t">{viewCustomer.notes}</div>}
                   </TabsContent>
-                  <TabsContent value="prescription" className="pt-3">
+
+                  <TabsContent value="rx" className="pt-3">
                     {viewCustomer.right_sphere != null ? (
                       <Table>
                         <TableHeader><TableRow><TableHead></TableHead><TableHead className="text-center">SPH</TableHead><TableHead className="text-center">CYL</TableHead><TableHead className="text-center">AXIS</TableHead><TableHead className="text-center">ADD</TableHead></TableRow></TableHeader>
@@ -424,9 +474,7 @@ export default function CustomersPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-yellow-500" />Customer Already Exists</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-3">
-              <p>Same name and phone found: <strong>{duplicateWarning?.name}</strong></p>
-            </AlertDialogDescription>
+            <AlertDialogDescription>Same name and phone found: <strong>{duplicateWarning?.name}</strong></AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -442,37 +490,59 @@ export default function CustomersPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Add/Edit — compact form */}
+      {/* Add/Edit — light form, advanced fields collapsed by default */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[88vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-md max-h-[88vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingCustomer ? 'Edit Customer' : 'Add Customer'}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-            <div className="space-y-1.5"><Label>Name *</Label><Input {...register('name')} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5"><Label>Name *</Label><Input autoFocus {...register('name')} /></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5"><Label>Phone</Label><Input {...register('phone')} /></div>
               <div className="space-y-1.5"><Label>Email</Label><Input type="email" {...register('email')} /></div>
             </div>
             <div className="space-y-1.5"><Label>Address</Label><Input {...register('address')} /></div>
-            <div className="space-y-1.5"><Label>Date of Birth</Label><Input type="date" {...register('dateOfBirth')} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5"><Label className="text-xs">Eye Type</Label><Select value={getValues('eyeType') || ''} onValueChange={(v) => v && setValue('eyeType', v, { shouldDirty: true })}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{['Single Vision','Bifocal','Progressive','Office Lens','Other'].map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent></Select></div>
-              <div className="space-y-1.5"><Label className="text-xs">Lens Type</Label><Select value={getValues('lensType') || ''} onValueChange={(v) => v && setValue('lensType', v, { shouldDirty: true })}><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger><SelectContent>{['CR-39','Polycarbonate','BlueCut','Photochromic','Hi-Index','Other'].map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent></Select></div>
-            </div>
-            <div className="border rounded-lg p-3">
-              <h3 className="font-medium text-sm mb-2">Prescription (Optional)</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-2.5 rounded-lg bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
-                  <p className="text-xs font-bold text-blue-600 mb-1.5">OD (Right)</p>
-                  {['SPH','CYL','AXIS','ADD'].map((f, i) => <div key={f} className="flex items-center gap-2 mb-1"><Label className="text-[10px] w-8">{f}</Label><Input className="h-7 text-xs border-blue-200 dark:border-blue-800" type="number" step={f==='AXIS'?1:0.25} {...register(['rightSphere','rightCylinder','rightAxis','rightAdd'][i] as any, { valueAsNumber: true })} /></div>)}
+
+            <Button type="button" variant="outline" size="sm" className="w-full justify-between" onClick={() => setShowRx(!showRx)}>
+              <span className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" /> Prescription & Measurements</span>
+              {showRx ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+            </Button>
+
+            {showRx && (
+              <div className="space-y-3 rounded-lg border p-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5"><Label className="text-xs">Date of Birth</Label><Input type="date" className="h-8" {...register('dateOfBirth')} /></div>
                 </div>
-                <div className="p-2.5 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
-                  <p className="text-xs font-bold text-amber-600 mb-1.5">OS (Left)</p>
-                  {['SPH','CYL','AXIS','ADD'].map((f, i) => <div key={f} className="flex items-center gap-2 mb-1"><Label className="text-[10px] w-8">{f}</Label><Input className="h-7 text-xs border-amber-200 dark:border-amber-800" type="number" step={f==='AXIS'?1:0.25} {...register(['leftSphere','leftCylinder','leftAxis','leftAdd'][i] as any, { valueAsNumber: true })} /></div>)}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Eye Type</Label>
+                    <Select value={getValues('eyeType') || ''} onValueChange={(v) => v && setValue('eyeType', v, { shouldDirty: true })}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>{EYE_TYPES.map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Lens Type</Label>
+                    <Select value={getValues('lensType') || ''} onValueChange={(v) => v && setValue('lensType', v, { shouldDirty: true })}>
+                      <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>{LENS_TYPES.map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-2.5 rounded-lg bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                    <p className="text-xs font-bold text-blue-600 mb-1.5">OD (Right)</p>
+                    {['SPH','CYL','AXIS','ADD'].map((f, i) => <div key={f} className="flex items-center gap-2 mb-1"><Label className="text-[10px] w-8">{f}</Label><Input className="h-7 text-xs border-blue-200 dark:border-blue-800" type="number" step={f==='AXIS'?1:0.25} {...register(['rightSphere','rightCylinder','rightAxis','rightAdd'][i] as any, { valueAsNumber: true })} /></div>)}
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                    <p className="text-xs font-bold text-amber-600 mb-1.5">OS (Left)</p>
+                    {['SPH','CYL','AXIS','ADD'].map((f, i) => <div key={f} className="flex items-center gap-2 mb-1"><Label className="text-[10px] w-8">{f}</Label><Input className="h-7 text-xs border-amber-200 dark:border-amber-800" type="number" step={f==='AXIS'?1:0.25} {...register(['leftSphere','leftCylinder','leftAxis','leftAdd'][i] as any, { valueAsNumber: true })} /></div>)}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2"><Label className="text-xs">IPD</Label><Input className="h-8 w-20 text-xs" type="number" step="0.5" {...register('ipd', { valueAsNumber: true })} /><span className="text-xs text-muted-foreground">mm</span></div>
+                <div className="space-y-1.5"><Label className="text-xs">Notes</Label><Textarea rows={2} {...register('notes')} /></div>
               </div>
-              <div className="flex items-center gap-2 mt-2"><Label className="text-xs">IPD</Label><Input className="h-7 w-20 text-xs" type="number" step="0.5" {...register('ipd', { valueAsNumber: true })} /></div>
-            </div>
-            <div className="space-y-1.5"><Label>Notes</Label><Textarea rows={2} {...register('notes')} /></div>
+            )}
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>{editingCustomer ? 'Update' : 'Add'}</Button>
