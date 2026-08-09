@@ -128,3 +128,52 @@
     @apply font-sans;
   }
 }
+
+@layer utilities {
+  /* Prevent iOS auto-zoom when focusing inputs */
+  @media (max-width: 767px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Safe-area padding for notched phones */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Thin, clean horizontal scrollbars for table wrappers */
+  .scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .scroll-x::-webkit-scrollbar {
+    height: 6px;
+  }
+  .scroll-x::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+  .scroll-x::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* Hide scrollbar for tab lists / carousels */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Smooth scroll for anchor targets */
+  .scroll-mt-safe {
+    scroll-margin-top: 5rem;
+  }
+}

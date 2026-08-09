@@ -67,16 +67,16 @@ export default function InvoicesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('invoices.title')}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('invoices.title')}</h1>
           <p className="text-muted-foreground">{t('invoices.subtitle')}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={exportCSV}>
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={exportCSV}>
             <Download className="h-4 w-4 mr-2" /> Export CSV
           </Button>
-          <Button onClick={() => window.location.href = '/invoices/new'}>
+          <Button className="flex-1 sm:flex-none" onClick={() => window.location.href = '/invoices/new'}>
             <Plus className="h-4 w-4 mr-2" /> New Invoice
           </Button>
         </div>
@@ -101,66 +101,114 @@ export default function InvoicesPage() {
             </div>
           ) : (
             <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[80px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((inv) => (
-                    <TableRow key={inv.id}>
-                      <TableCell className="font-mono font-medium text-sm">
-                        {inv.invoice_number}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {new Date(inv.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-sm">{inv.customer_name || 'Walk-in'}</p>
-                          {inv.customer_phone && (
-                            <p className="text-xs text-muted-foreground">{inv.customer_phone}</p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="text-xs">
-                          {inv.invoice_type.toUpperCase()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(inv.total_amount)}
-                      </TableCell>
-                      <TableCell>
+              {/* Desktop table */}
+              <div className="hidden md:block scroll-x -mx-1 px-1">
+                <Table className="min-w-[640px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Invoice #</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-[80px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.map((inv) => (
+                      <TableRow key={inv.id}>
+                        <TableCell className="font-mono font-medium text-sm">
+                          {inv.invoice_number}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {new Date(inv.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-sm">{inv.customer_name || 'Walk-in'}</p>
+                            {inv.customer_phone && (
+                              <p className="text-xs text-muted-foreground">{inv.customer_phone}</p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="text-xs">
+                            {inv.invoice_type.toUpperCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(inv.total_amount)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={statusColors[inv.payment_status] || ''}>
+                            {inv.payment_status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => window.location.href = `/invoices/${inv.id}`}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(inv)}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden space-y-3">
+                {filtered.map((inv) => (
+                  <div
+                    key={inv.id}
+                    onClick={() => window.location.href = `/invoices/${inv.id}`}
+                    className="rounded-xl border p-3.5 active:bg-accent/50 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-mono font-semibold text-sm truncate">{inv.invoice_number}</p>
+                        <p className="text-sm text-muted-foreground truncate mt-0.5">
+                          {inv.customer_name || 'Walk-in'}
+                          {inv.customer_phone && ` · ${inv.customer_phone}`}
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="text-[10px] shrink-0">
+                        {inv.invoice_type.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                      <div className="flex items-center gap-2">
                         <Badge className={statusColors[inv.payment_status] || ''}>
                           {inv.payment_status}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => window.location.href = `/invoices/${inv.id}`}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(inv)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(inv.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm">{formatCurrency(inv.total_amount)}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(inv) }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 mt-4">

@@ -103,7 +103,7 @@ export default function MessagesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('common.messages')}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('common.messages')}</h1>
         <p className="text-sm text-muted-foreground mt-1">Send bulk notifications to your customers via SMS, Email, or WhatsApp</p>
       </div>
 
@@ -189,13 +189,13 @@ export default function MessagesPage() {
               </div>
 
               {/* Stats Bar */}
-              <div className="flex items-center justify-between bg-muted/50 rounded-lg px-4 py-2.5">
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-muted/50 rounded-lg px-3 sm:px-4 py-2.5">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                   <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5" /><strong className="text-foreground">{activeCount}</strong> recipients</span>
                   <span className="hidden sm:flex items-center gap-1.5">•</span>
                   <span className="hidden sm:inline">{eligibleCustomers.length} eligible for {ch.label}</span>
                 </div>
-                <Button onClick={handleSend} disabled={sending || !message.trim()} size="sm" className="bg-blue-600 hover:bg-blue-700 h-8 text-xs gap-1.5">
+                <Button onClick={handleSend} disabled={sending || !message.trim()} size="sm" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 h-9 sm:h-8 text-xs gap-1.5">
                   {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                   {sending ? 'Sending...' : `Send ${ch.label}`}
                 </Button>

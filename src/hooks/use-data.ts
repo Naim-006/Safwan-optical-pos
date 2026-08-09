@@ -187,6 +187,7 @@ export function useCreateInvoice() {
       createInvoice(invoice, items),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['invoices'] })
+      qc.invalidateQueries({ queryKey: ['products'] })
       toast.success('Invoice saved')
     },
     onError: (err: Error) => toast.error(err.message),

@@ -264,19 +264,19 @@ export default function FinancePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('finance.title')}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('finance.title')}</h1>
           <p className="text-muted-foreground">{t('finance.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex gap-1 bg-muted rounded-lg p-1">
+          <div className="flex gap-1 bg-muted rounded-lg p-1 overflow-x-auto no-scrollbar">
             {(['today', '7days', '30days', '90days', 'all'] as const).map((r) => (
               <Button
                 key={r}
                 variant={range === r ? 'default' : 'ghost'}
                 size="sm"
-                className="rounded-md text-xs"
+                className="rounded-md text-xs whitespace-nowrap"
                 onClick={() => setRange(r)}
               >
                 {r === 'today' ? 'Today' : r === '7days' ? '7D' : r === '30days' ? '30D' : r === '90days' ? '90D' : 'All'}
@@ -293,7 +293,7 @@ export default function FinancePage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Card className="overflow-hidden relative">
           <div className="absolute right-0 top-0 w-24 h-24 bg-green-500/10 rounded-bl-full" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -301,7 +301,7 @@ export default function FinancePage() {
             <div className="rounded-lg bg-green-500/10 p-1.5"><ArrowDownRight className="h-4 w-4 text-green-600" /></div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalIncome)}</div>
+            <div className="text-xl sm:text-2xl font-bold truncate">{formatCurrency(totalIncome)}</div>
             <p className="text-xs text-muted-foreground mt-1">{t('finance.collected')} {formatCurrency(income)}</p>
           </CardContent>
         </Card>
@@ -313,7 +313,7 @@ export default function FinancePage() {
             <div className="rounded-lg bg-red-500/10 p-1.5"><ArrowUpRight className="h-4 w-4 text-red-600" /></div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">{formatCurrency(expenseTotal)}</div>
+            <div className="text-xl sm:text-2xl font-bold text-red-600 truncate">{formatCurrency(expenseTotal)}</div>
             <p className="text-xs text-muted-foreground mt-1">{filteredExpenses.length} {t('finance.expenses')}</p>
           </CardContent>
         </Card>
@@ -325,7 +325,7 @@ export default function FinancePage() {
             <div className="rounded-lg bg-blue-500/10 p-1.5"><PiggyBank className="h-4 w-4 text-blue-600" /></div>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${net >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(net)}</div>
+            <div className={`text-xl sm:text-2xl font-bold truncate ${net >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(net)}</div>
             <p className="text-xs text-muted-foreground mt-1">{netPct}% margin</p>
           </CardContent>
         </Card>
@@ -337,7 +337,7 @@ export default function FinancePage() {
             <div className="rounded-lg bg-purple-500/10 p-1.5"><Receipt className="h-4 w-4 text-purple-600" /></div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{transactions.length}</div>
+            <div className="text-xl sm:text-2xl font-bold truncate">{transactions.length}</div>
             <p className="text-xs text-muted-foreground mt-1">{t('finance.allTransactions')}</p>
           </CardContent>
         </Card>
@@ -448,64 +448,117 @@ export default function FinancePage() {
         </CardHeader>
         <CardContent>
           {transactions.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('finance.date')}</TableHead>
-                  <TableHead>{t('finance.type')}</TableHead>
-                  <TableHead>{t('finance.reference')}</TableHead>
-                  <TableHead>{t('finance.description')}</TableHead>
-                  <TableHead>{t('finance.category')}</TableHead>
-                  <TableHead className="text-right">{t('finance.amount')}</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              <div className="hidden md:block scroll-x -mx-1 px-1">
+                <Table className="min-w-[720px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('finance.date')}</TableHead>
+                      <TableHead>{t('finance.type')}</TableHead>
+                      <TableHead>{t('finance.reference')}</TableHead>
+                      <TableHead>{t('finance.description')}</TableHead>
+                      <TableHead>{t('finance.category')}</TableHead>
+                      <TableHead className="text-right">{t('finance.amount')}</TableHead>
+                      <TableHead className="w-[50px]"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {transactions.slice(0, 100).map((tx: any) => {
+                      const meta = catMeta(tx.category)
+                      const Icon = meta.icon
+                      return (
+                        <TableRow key={tx.id}>
+                          <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                            {new Date(tx.date).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={tx.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} variant="outline">
+                              {tx.type === 'income' ? 'Income' : 'Expense'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">{tx.ref || '-'}</TableCell>
+                          <TableCell className="text-sm font-medium max-w-[200px] truncate">{tx.title || '-'}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5">
+                              <span className="rounded p-1" style={{ backgroundColor: meta.color + '1a' }}>
+                                <Icon className="h-3 w-3" style={{ color: meta.color }} />
+                              </span>
+                              <span className="text-xs capitalize text-muted-foreground">{meta.label}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className={`text-right font-bold text-sm ${tx.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                            {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
+                          </TableCell>
+                          <TableCell>
+                            {tx.type === 'expense' && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger className={buttonVariants({ variant: 'ghost', size: 'icon' })}>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => setDeleteTarget(tx.data)} className="text-red-600 cursor-pointer">
+                                    <Trash2 className="h-4 w-4 mr-2" /> {t('common.delete')}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden space-y-3">
                 {transactions.slice(0, 100).map((tx: any) => {
                   const meta = catMeta(tx.category)
                   const Icon = meta.icon
                   return (
-                    <TableRow key={tx.id}>
-                      <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
-                        {new Date(tx.date).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={tx.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} variant="outline">
-                          {tx.type === 'income' ? 'Income' : 'Expense'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs">{tx.ref || '-'}</TableCell>
-                      <TableCell className="text-sm font-medium max-w-[200px] truncate">{tx.title || '-'}</TableCell>
-                      <TableCell>
+                    <div key={tx.id} className={`rounded-xl border p-3.5 ${tx.type === 'income' ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-red-500'}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <Badge className={tx.type === 'income' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} variant="outline">
+                              {tx.type === 'income' ? 'Income' : 'Expense'}
+                            </Badge>
+                            {tx.ref && <span className="font-mono text-[11px] text-muted-foreground">{tx.ref}</span>}
+                          </div>
+                          <p className="font-medium text-sm truncate mt-1.5">{tx.title || '-'}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className={`font-bold text-sm ${tx.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                            {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            {new Date(tx.date).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t">
                         <div className="flex items-center gap-1.5">
                           <span className="rounded p-1" style={{ backgroundColor: meta.color + '1a' }}>
                             <Icon className="h-3 w-3" style={{ color: meta.color }} />
                           </span>
                           <span className="text-xs capitalize text-muted-foreground">{meta.label}</span>
                         </div>
-                      </TableCell>
-                      <TableCell className={`text-right font-bold text-sm ${tx.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {tx.type === 'income' ? '+' : '-'}{formatCurrency(tx.amount)}
-                      </TableCell>
-                      <TableCell>
                         {tx.type === 'expense' && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger className={buttonVariants({ variant: 'ghost', size: 'icon' })}>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setDeleteTarget(tx.data)} className="text-red-600 cursor-pointer">
-                                <Trash2 className="h-4 w-4 mr-2" /> {t('common.delete')}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setDeleteTarget(tx.data)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
                         )}
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                    </div>
                   )
                 })}
-              </TableBody>
-            </Table>
+              </div>
+            </>
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <Receipt className="h-12 w-12 mx-auto mb-3 opacity-20" />

@@ -148,33 +148,35 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('reports.title')}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('reports.title')}</h1>
           <p className="text-muted-foreground">
             {start} — {end}
           </p>
         </div>
-        <div className="flex gap-1 bg-muted rounded-lg p-1">
-          {(['today', '7days', '30days', 'all'] as const).map((r) => (
-            <Button
-              key={r}
-              variant={range === r ? 'default' : 'ghost'}
-              size="sm"
-              className="rounded-md text-xs"
-              onClick={() => setRange(r)}
-            >
-              {r === 'today' ? 'Today' : r === '7days' ? '7D' : r === '30days' ? '30D' : 'All'}
-            </Button>
-          ))}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex gap-1 bg-muted rounded-lg p-1 overflow-x-auto no-scrollbar">
+            {(['today', '7days', '30days', 'all'] as const).map((r) => (
+              <Button
+                key={r}
+                variant={range === r ? 'default' : 'ghost'}
+                size="sm"
+                className="rounded-md text-xs whitespace-nowrap"
+                onClick={() => setRange(r)}
+              >
+                {r === 'today' ? 'Today' : r === '7days' ? '7D' : r === '30days' ? '30D' : 'All'}
+              </Button>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" onClick={handlePDF}>
+            <Download className="h-4 w-4 mr-2" /> Export PDF
+          </Button>
         </div>
-        <Button variant="outline" size="sm" onClick={handlePDF}>
-          <Download className="h-4 w-4 mr-2" /> Export PDF
-        </Button>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <Card className="overflow-hidden">
           <div className="absolute right-0 top-0 w-20 h-20 bg-blue-500/10 rounded-bl-full" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -184,7 +186,7 @@ export default function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+            <div className="text-xl sm:text-2xl font-bold truncate">{formatCurrency(totalRevenue)}</div>
             <div className="flex items-center gap-1 mt-1 text-xs">
               {prevRange > 0 ? (
                 <><ArrowUp className="h-3 w-3 text-green-600" /><span className="text-green-600">+{prevRange}%</span></>
@@ -207,7 +209,7 @@ export default function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalCollected)}</div>
+            <div className="text-xl sm:text-2xl font-bold truncate">{formatCurrency(totalCollected)}</div>
             <p className="text-xs text-muted-foreground mt-1">{collectionRate}% collection rate</p>
           </CardContent>
         </Card>
@@ -221,7 +223,7 @@ export default function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{allData.length}</div>
+            <div className="text-xl sm:text-2xl font-bold truncate">{allData.length}</div>
             <p className="text-xs text-muted-foreground mt-1">Avg: {formatCurrency(allData.length ? totalRevenue / allData.length : 0)}</p>
           </CardContent>
         </Card>
@@ -235,7 +237,7 @@ export default function ReportsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalRevenue - totalCollected)}</div>
+            <div className="text-xl sm:text-2xl font-bold truncate">{formatCurrency(totalRevenue - totalCollected)}</div>
             <p className="text-xs text-muted-foreground mt-1">Outstanding balance</p>
           </CardContent>
         </Card>
@@ -405,30 +407,32 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             {allData.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {allData.slice(0, 8).map((inv: any) => (
-                    <TableRow key={inv.id}>
-                      <TableCell className="font-mono text-xs">{inv.invoice_number}</TableCell>
-                      <TableCell className="text-sm">{inv.customer_name || 'Walk-in'}</TableCell>
-                      <TableCell className="text-right text-sm font-medium">{formatCurrency(inv.total_amount)}</TableCell>
-                      <TableCell>
-                        <Badge variant={inv.payment_status === 'paid' ? 'default' : 'destructive'} className="text-[10px]">
-                          {inv.payment_status}
-                        </Badge>
-                      </TableCell>
+              <div className="scroll-x -mx-1 px-1">
+                <Table className="min-w-[480px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Invoice #</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {allData.slice(0, 8).map((inv: any) => (
+                      <TableRow key={inv.id}>
+                        <TableCell className="font-mono text-xs">{inv.invoice_number}</TableCell>
+                        <TableCell className="text-sm">{inv.customer_name || 'Walk-in'}</TableCell>
+                        <TableCell className="text-right text-sm font-medium">{formatCurrency(inv.total_amount)}</TableCell>
+                        <TableCell>
+                          <Badge variant={inv.payment_status === 'paid' ? 'default' : 'destructive'} className="text-[10px]">
+                            {inv.payment_status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             ) : (
               <div className="text-center py-8 text-muted-foreground text-sm">No transactions</div>
             )}
@@ -437,7 +441,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Quick Stats Footer */}
-      <div className="grid gap-4 grid-cols-3 lg:grid-cols-6">
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
         <Card className="py-3">
           <CardContent className="flex flex-col items-center gap-1 p-2">
             <Package className="h-5 w-5 text-cyan-600" />

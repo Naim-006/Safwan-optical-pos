@@ -269,12 +269,12 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('settings.title')}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('settings.title')}</h1>
         <p className="text-muted-foreground">{t('settings.subtitle')}</p>
       </div>
 
       <Tabs defaultValue="shop" className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-xl">
+        <TabsList className="grid grid-cols-2 sm:grid-cols-4 w-full max-w-xl">
           <TabsTrigger value="shop" className="flex items-center gap-1.5"><Store className="h-3.5 w-3.5" /> Shop</TabsTrigger>
           <TabsTrigger value="account" className="flex items-center gap-1.5"><Lock className="h-3.5 w-3.5" /> Account</TabsTrigger>
           <TabsTrigger value="language" className="flex items-center gap-1.5"><Languages className="h-3.5 w-3.5" /> Language</TabsTrigger>
@@ -286,7 +286,7 @@ export default function SettingsPage() {
           <form onSubmit={handleSubmit(onShopSubmit)} className="space-y-6">
              <Card className="border-t-2 border-t-blue-500">
                <CardHeader>
-                 <div className="flex items-center justify-between">
+                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                    <div>
                      <CardTitle>Shop Information</CardTitle>
                      <CardDescription>Your business details shown on invoices and receipts</CardDescription>
@@ -309,18 +309,20 @@ export default function SettingsPage() {
                    <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 space-y-3">
                      <p className="text-sm font-medium">Verification Required</p>
                      <p className="text-xs text-muted-foreground">A verification code has been sent to {maskedEmail}</p>
-                     <div className="flex gap-2">
-                       <Input
-                         placeholder="Enter 6-digit code"
-                         value={verifyInput}
-                         onChange={(e) => setVerifyInput(e.target.value)}
-                         className="h-9 text-center text-lg tracking-widest"
-                         maxLength={6}
-                         onKeyDown={(e) => e.key === 'Enter' && submitVerification()}
-                       />
-                       <Button type="button" size="sm" onClick={submitVerification}>Verify</Button>
-                       <Button type="button" variant="ghost" size="sm" onClick={() => { setVerifyMode(false); setVerifyInput('') }}>Cancel</Button>
-                     </div>
+                     <div className="flex flex-col sm:flex-row gap-2">
+                        <Input
+                          placeholder="Enter 6-digit code"
+                          value={verifyInput}
+                          onChange={(e) => setVerifyInput(e.target.value)}
+                          className="h-9 text-center text-lg tracking-widest"
+                          maxLength={6}
+                          onKeyDown={(e) => e.key === 'Enter' && submitVerification()}
+                        />
+                        <div className="flex gap-2">
+                          <Button type="button" size="sm" className="flex-1" onClick={submitVerification}>Verify</Button>
+                          <Button type="button" variant="ghost" size="sm" className="flex-1" onClick={() => { setVerifyMode(false); setVerifyInput('') }}>Cancel</Button>
+                        </div>
+                      </div>
                    </div>
                  )}
 
@@ -343,7 +345,7 @@ export default function SettingsPage() {
                    </div>
                  </div>
 
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="grid gap-4 sm:grid-cols-2">
                    <div className="space-y-2">
                      <Label>Shop Name (English)</Label>
                      <Input {...register('shopName')} disabled={locked} />
@@ -354,7 +356,7 @@ export default function SettingsPage() {
                    </div>
                  </div>
 
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="grid gap-4 sm:grid-cols-2">
                    <div className="space-y-2">
                      <Label>CR Number</Label>
                      <Input {...register('crNumber')} disabled={locked} />
@@ -369,7 +371,7 @@ export default function SettingsPage() {
                    <Label>Address</Label>
                    <Textarea rows={2} {...register('shopAddress')} disabled={locked} />
                  </div>
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="grid gap-4 sm:grid-cols-2">
                    <div className="space-y-2">
                      <Label>Phone</Label>
                      <Input {...register('shopPhone')} disabled={locked} />
@@ -379,7 +381,7 @@ export default function SettingsPage() {
                      <Input {...register('shopWebsite')} disabled={locked} />
                    </div>
                  </div>
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="grid gap-4 sm:grid-cols-2">
                    <div className="space-y-2">
                      <Label>Currency</Label>
                      <Select disabled={locked} onValueChange={(v) => v && setValue('currency', v)}>
@@ -444,7 +446,7 @@ export default function SettingsPage() {
               <CardDescription>Switch between English and Arabic interfaces</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 max-w-md">
+              <div className="grid gap-4 sm:grid-cols-2 max-w-md">
                 <button
                   type="button"
                   onClick={() => changeLanguage('en')}

@@ -229,17 +229,17 @@ export default function CustomersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('customers.title')}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('customers.title')}</h1>
           <p className="text-muted-foreground">{displayData.total} customers</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportExcel}>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handleExportExcel}>
             <FileSpreadsheet className="h-4 w-4 mr-2" /> Export Excel
           </Button>
-          <Button variant="outline" size="sm" onClick={handleImportExcel}>
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handleImportExcel}>
             <FileSpreadsheet className="h-4 w-4 mr-2" /> Import Excel
           </Button>
-          <Button onClick={openAdd} className="bg-purple-600 hover:bg-purple-700"><Plus className="h-4 w-4 mr-2" /> Add</Button>
+          <Button onClick={openAdd} className="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-700"><Plus className="h-4 w-4 mr-2" /> Add</Button>
         </div>
       </div>
 
@@ -274,25 +274,56 @@ export default function CustomersPage() {
             <div className="text-center py-12 text-muted-foreground"><User className="h-12 w-12 mx-auto mb-3 opacity-20" /><p>No customers</p></div>
           ) : (
             <>
-              <Table>
-                <TableHeader><TableRow><TableHead>Customer</TableHead><TableHead>Phone</TableHead><TableHead>Email</TableHead><TableHead className="w-[50px]">Rx</TableHead></TableRow></TableHeader>
-                <TableBody>
-                  {displayData.list.map((customer: any) => (
-                    <TableRow key={customer.id} className="cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/20" onClick={() => { setCustInvoices([]); setCustStats({ total: 0, paid: 0, count: 0, last: null }); setViewCustomer(customer) }}>
-                      <TableCell><div className="flex items-center gap-2.5"><Avatar className="h-7 w-7"><AvatarFallback className="text-[10px]">{getInitials(customer.name)}</AvatarFallback></Avatar><span className="font-medium text-sm">{customer.name}</span></div></TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{customer.phone || '-'}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">{customer.email || '-'}</TableCell>
-                      <TableCell>{customer.right_sphere != null ? <Badge variant="outline" className="text-[10px] border-purple-300 text-purple-600">Rx</Badge> : <span className="text-muted-foreground text-xs">-</span>}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(customer)}><Edit className="h-3.5 w-3.5" /></Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteTarget(customer)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+              {/* Desktop table */}
+              <div className="hidden md:block scroll-x -mx-1 px-1">
+                <Table className="min-w-[640px]">
+                  <TableHeader><TableRow><TableHead>Customer</TableHead><TableHead>Phone</TableHead><TableHead>Email</TableHead><TableHead className="w-[50px]">Rx</TableHead></TableRow></TableHeader>
+                  <TableBody>
+                    {displayData.list.map((customer: any) => (
+                      <TableRow key={customer.id} className="cursor-pointer hover:bg-purple-50 dark:hover:bg-purple-950/20" onClick={() => { setCustInvoices([]); setCustStats({ total: 0, paid: 0, count: 0, last: null }); setViewCustomer(customer) }}>
+                        <TableCell><div className="flex items-center gap-2.5"><Avatar className="h-7 w-7"><AvatarFallback className="text-[10px]">{getInitials(customer.name)}</AvatarFallback></Avatar><span className="font-medium text-sm">{customer.name}</span></div></TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{customer.phone || '-'}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{customer.email || '-'}</TableCell>
+                        <TableCell>{customer.right_sphere != null ? <Badge variant="outline" className="text-[10px] border-purple-300 text-purple-600">Rx</Badge> : <span className="text-muted-foreground text-xs">-</span>}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 justify-end" onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(customer)}><Edit className="h-3.5 w-3.5" /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteTarget(customer)}><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile cards */}
+              <div className="md:hidden space-y-3">
+                {displayData.list.map((customer: any) => (
+                  <div
+                    key={customer.id}
+                    onClick={() => { setCustInvoices([]); setCustStats({ total: 0, paid: 0, count: 0, last: null }); setViewCustomer(customer) }}
+                    className="rounded-xl border p-3.5 active:bg-accent/50 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10 shrink-0"><AvatarFallback>{getInitials(customer.name)}</AvatarFallback></Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-sm truncate">{customer.name}</p>
+                          {customer.right_sphere != null && <Badge variant="outline" className="text-[10px] border-purple-300 text-purple-600 shrink-0">Rx</Badge>}
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {customer.phone || 'No phone'}{customer.email ? ` · ${customer.email}` : ''}
+                        </p>
+                      </div>
+                      <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(customer)}><Edit className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteTarget(customer)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
               {displayData.pages > 1 && (
                 <div className="flex items-center justify-center gap-2 mt-3">
                   <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" /></Button>

@@ -185,11 +185,27 @@ export default function PosPage() {
 
   const setAsWalkIn = () => {
     setSelectedCustomerId(null)
-    setCustomerName(customerSearch)
+    setCustomerName('Walk-in')
     setIsWalkIn(true)
     setShowCustomerResults(false)
     setShowPrescription(false)
     clearPrescription()
+  }
+
+  // ─── Walk-in quick select: press Enter 4x (no typing needed) ───
+  const walkInTimerRef = useRef<number>(0)
+
+  const handleWalkInEnter = () => {
+    enterCountRef.current += 1
+    if (enterCountRef.current >= 4) {
+      enterCountRef.current = 0
+      window.clearTimeout(walkInTimerRef.current)
+      setAsWalkIn()
+      toast.success('Walk-in customer selected')
+      return
+    }
+    window.clearTimeout(walkInTimerRef.current)
+    walkInTimerRef.current = window.setTimeout(() => { enterCountRef.current = 0 }, 3000)
   }
 
   // ─── Complete sale ───
@@ -263,6 +279,7 @@ export default function PosPage() {
           created_by: userId || '00000000-0000-0000-0000-000000000000',
         },
         items: cart.map((item) => ({
+          product_id: item.id || null,
           description: item.name,
           quantity: item.cartQuantity,
           unit_price: item.price,
@@ -424,7 +441,7 @@ export default function PosPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('pos.title')}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('pos.title')}</h1>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -442,6 +459,17 @@ export default function PosPage() {
                       className="pl-9"
                       value={barcodeInput}
                       onChange={(e) => setBarcodeInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          if (!barcodeInput.trim()) {
+                            // empty + Enter → counts toward walk-in (x4)
+                            e.preventDefault()
+                            handleWalkInEnter()
+                          } else {
+                            enterCountRef.current = 0
+                          }
+                        }
+                      }}
                     />
                   </div>
                   <Button type="submit">Add</Button>
@@ -458,7 +486,7 @@ export default function PosPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-2 max-h-[500px] overflow-y-auto">
+              <div className="grid gap-2 max-h-[380px] md:max-h-[500px] overflow-y-auto">
                 {displayProducts.map((product) => (
                   <div
                     key={product.id}
@@ -485,9 +513,9 @@ export default function PosPage() {
         </div>
 
         {/* RIGHT: Cart + Customer + Payment */}
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           {/* ─── CUSTOMER SEARCH & PRESCRIPTION ─── */}
-          <Card className="overflow-visible border-t-2 border-t-emerald-500 shadow-sm">
+          <Card className="overflow-visible border-t-2 border-t-emerald-500 shadow-sm order-2 xl:order-none scroll-mt-20">
             <CardHeader className="pb-2 bg-gradient-to-b from-emerald-50/80 to-transparent dark:from-emerald-950/30 dark:to-transparent rounded-t-xl">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
                 <User className="h-4 w-4 text-emerald-600" /> Customer
@@ -497,7 +525,7 @@ export default function PosPage() {
                 {selectedCustomerId && (
                   <Badge className="ml-auto text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 border-emerald-300">Member</Badge>
                 )}
-                {!selectedCustomerId && customerName && (
+                {!selectedCustomerId && customerName && !isWalkIn && (
                   <Badge className="ml-auto text-[10px] bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 border-amber-300">New</Badge>
                 )}
               </CardTitle>
@@ -506,19 +534,14 @@ export default function PosPage() {
               {/* Customer search */}
               <div className="relative" ref={customerSearchRef}>
                 <Input
-                  placeholder="Search or press Enter x4 for walk-in"
+                  placeholder="Search name/phone · Enter x4 = Walk-in"
                   value={customerSearch}
                   onChange={(e) => { setCustomerSearch(e.target.value); setShowCustomerResults(true) }}
                   onFocus={() => { if (customerSearch.length >= 2) setShowCustomerResults(true) }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && customerSearch.trim()) {
+                    if (e.key === 'Enter') {
                       e.preventDefault()
-                      enterCountRef.current += 1
-                      if (enterCountRef.current >= 4) {
-                        setAsWalkIn()
-                        enterCountRef.current = 0
-                      }
-                      setTimeout(() => { enterCountRef.current = 0 }, 1500)
+                      handleWalkInEnter()
                     }
                   }}
                 />
@@ -684,7 +707,7 @@ export default function PosPage() {
           </Card>
 
           {/* ─── CART ─── */}
-          <Card className="border-t-2 border-t-orange-500 shadow-sm">
+          <Card id="pos-cart" className="border-t-2 border-t-orange-500 shadow-sm order-1 xl:order-none scroll-mt-20">
             <CardHeader className="pb-3 bg-gradient-to-b from-orange-50/80 to-transparent dark:from-orange-950/30 dark:to-transparent rounded-t-xl">
               <CardTitle className="flex items-center gap-2 text-lg font-semibold">
                 <ShoppingCart className="h-5 w-5 text-orange-600" />
@@ -794,9 +817,9 @@ export default function PosPage() {
               <div className="flex gap-2 pt-2">
                 <Button className="flex-1" size="lg"
                   onClick={handleComplete}
-                  disabled={cart.length === 0 || !customerName.trim() || createInvoiceMutation.isPending}>
+                  disabled={cart.length === 0 || (!customerName.trim() && !isWalkIn) || createInvoiceMutation.isPending}>
                   <ShoppingCart className="h-4 w-4 mr-2" />
-                  {!customerName.trim() ? 'Select a Customer' : 'Complete Sale'}
+                  {!customerName.trim() && !isWalkIn ? 'Select a Customer' : 'Complete Sale'}
                 </Button>
                 <Button variant="outline" size="lg" onClick={clearCart} disabled={cart.length === 0}>
                   Clear

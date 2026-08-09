@@ -137,12 +137,12 @@ export default function ReceiptViewPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between print:hidden">
-        <Button variant="ghost" onClick={() => router.push('/receipts')}><ArrowLeft className="h-4 w-4 mr-2" /> Back</Button>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handlePrint}><Printer className="h-4 w-4 mr-2" /> Thermal Print</Button>
-          <Button variant="outline" size="sm" onClick={handlePrintA4}><Printer className="h-4 w-4 mr-2" /> Print A4</Button>
-          <Button variant="outline" size="sm" onClick={handlePDF}><Download className="h-4 w-4 mr-2" /> PDF (A4)</Button>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 print:hidden">
+        <Button variant="ghost" className="w-full sm:w-auto" onClick={() => router.push('/receipts')}><ArrowLeft className="h-4 w-4 mr-2" /> Back</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handlePrint}><Printer className="h-4 w-4 mr-2" /> Thermal Print</Button>
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handlePrintA4}><Printer className="h-4 w-4 mr-2" /> Print A4</Button>
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handlePDF}><Download className="h-4 w-4 mr-2" /> PDF (A4)</Button>
         </div>
       </div>
 

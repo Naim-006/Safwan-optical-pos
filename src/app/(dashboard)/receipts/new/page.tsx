@@ -214,7 +214,7 @@ export default function NewReceiptPage() {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('receipts.newReceiptVoucher')}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('receipts.newReceiptVoucher')}</h1>
         <p className="text-muted-foreground">{t('receipts.newReceiptDesc')}</p>
       </div>
 
@@ -285,7 +285,7 @@ export default function NewReceiptPage() {
 
             <Separator />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Amount (SAR)</Label>
                 <Input
@@ -309,7 +309,7 @@ export default function NewReceiptPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Bank Name</Label>
                 <Input placeholder="Optional" value={bank} onChange={(e) => setBank(e.target.value)} />
@@ -320,7 +320,7 @@ export default function NewReceiptPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Payment Date</Label>
                 <Input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />

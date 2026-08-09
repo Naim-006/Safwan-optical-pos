@@ -101,11 +101,9 @@ export default function DashboardPage() {
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('common.dashboard')}</h1>
           <p className="text-sm text-muted-foreground hidden sm:block">{t('common.welcomeBack')}</p>
         </div>
-        <div className="flex gap-2">
-          <Button size="sm" onClick={() => router.push('/pos')}>
-            <ShoppingCart className="h-4 w-4 mr-2" /> New Sale
-          </Button>
-        </div>
+        <Button size="sm" className="w-full sm:w-auto" onClick={() => router.push('/pos')}>
+          <ShoppingCart className="h-4 w-4 mr-2" /> New Sale
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -119,7 +117,7 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(todaySales)}</div>
+            <div className="text-xl sm:text-2xl font-bold truncate">{formatCurrency(todaySales)}</div>
             <p className="text-xs text-muted-foreground mt-1">{todayCount} invoices today</p>
           </CardContent>
         </Card>
@@ -133,7 +131,7 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
+            <div className="text-xl sm:text-2xl font-bold truncate">{products.length}</div>
             <p className="text-xs text-muted-foreground mt-1">In inventory</p>
           </CardContent>
         </Card>
@@ -147,7 +145,7 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{customers.length}</div>
+            <div className="text-xl sm:text-2xl font-bold truncate">{customers.length}</div>
             <p className="text-xs text-muted-foreground mt-1">Active members</p>
           </CardContent>
         </Card>
@@ -161,7 +159,7 @@ export default function DashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(pendingBalance)}</div>
+            <div className="text-xl sm:text-2xl font-bold truncate">{formatCurrency(pendingBalance)}</div>
             <p className="text-xs text-muted-foreground mt-1">Unpaid invoices</p>
           </CardContent>
         </Card>

@@ -245,18 +245,18 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between print:hidden">
-        <Button variant="ghost" onClick={() => router.push('/invoices')}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 print:hidden">
+        <Button variant="ghost" className="w-full sm:w-auto" onClick={() => router.push('/invoices')}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Back
         </Button>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handlePrint}>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handlePrint}>
             <Printer className="h-4 w-4 mr-2" /> Thermal Print
           </Button>
-          <Button variant="outline" size="sm" onClick={handlePrintA4}>
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handlePrintA4}>
             <Printer className="h-4 w-4 mr-2" /> Print A4
           </Button>
-          <Button variant="outline" size="sm" onClick={handlePDF}>
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={handlePDF}>
             <Download className="h-4 w-4 mr-2" /> PDF (A4)
           </Button>
         </div>
@@ -294,62 +294,66 @@ export default function InvoiceViewPage({ params }: { params: Promise<{ id: stri
                 <div>Lens Type: <span className="font-medium">{inv.lens_type || '-'}</span></div>
               </div>
               {inv.right_sphere != null && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead></TableHead>
-                      <TableHead className="text-center">SPH</TableHead>
-                      <TableHead className="text-center">CYL</TableHead>
-                      <TableHead className="text-center">AXIS</TableHead>
-                      <TableHead className="text-center">ADD</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">R</TableCell>
-                      <TableCell className="text-center">{inv.right_sphere}</TableCell>
-                      <TableCell className="text-center">{inv.right_cylinder}</TableCell>
-                      <TableCell className="text-center">{inv.right_axis}</TableCell>
-                      <TableCell className="text-center">{inv.right_add}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">L</TableCell>
-                      <TableCell className="text-center">{inv.left_sphere}</TableCell>
-                      <TableCell className="text-center">{inv.left_cylinder}</TableCell>
-                      <TableCell className="text-center">{inv.left_axis}</TableCell>
-                      <TableCell className="text-center">{inv.left_add}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                <div className="scroll-x -mx-1 px-1">
+                  <Table className="min-w-[420px]">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead></TableHead>
+                        <TableHead className="text-center">SPH</TableHead>
+                        <TableHead className="text-center">CYL</TableHead>
+                        <TableHead className="text-center">AXIS</TableHead>
+                        <TableHead className="text-center">ADD</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium">R</TableCell>
+                        <TableCell className="text-center">{inv.right_sphere}</TableCell>
+                        <TableCell className="text-center">{inv.right_cylinder}</TableCell>
+                        <TableCell className="text-center">{inv.right_axis}</TableCell>
+                        <TableCell className="text-center">{inv.right_add}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium">L</TableCell>
+                        <TableCell className="text-center">{inv.left_sphere}</TableCell>
+                        <TableCell className="text-center">{inv.left_cylinder}</TableCell>
+                        <TableCell className="text-center">{inv.left_axis}</TableCell>
+                        <TableCell className="text-center">{inv.left_add}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
               )}
               {inv.ipd && <p className="text-sm">IPD: {inv.ipd}mm</p>}
             </div>
           )}
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Item</TableHead>
-                <TableHead className="text-center">Qty</TableHead>
-                <TableHead className="text-right">Price</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item: any) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.description}</TableCell>
-                  <TableCell className="text-center">{item.quantity}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
-                  <TableCell className="text-right font-medium">{formatCurrency(item.total_price)}</TableCell>
+          <div className="scroll-x -mx-1 px-1">
+            <Table className="min-w-[480px]">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Item</TableHead>
+                  <TableHead className="text-center">Qty</TableHead>
+                  <TableHead className="text-right">Price</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {items.map((item: any) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.description}</TableCell>
+                    <TableCell className="text-center">{item.quantity}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
+                    <TableCell className="text-right font-medium">{formatCurrency(item.total_price)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
 
           <Separator />
 
-          <div className="space-y-2 text-sm w-72 ml-auto">
+          <div className="space-y-2 text-sm w-full sm:w-72 sm:ml-auto">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Subtotal</span>
               <span>{formatCurrency(inv.subtotal)}</span>

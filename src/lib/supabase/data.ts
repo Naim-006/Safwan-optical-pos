@@ -155,9 +155,26 @@ export async function createInvoice(invoice: Row, items: Row[]) {
   if (invError) throw invError
 
   const invRecord = invData as Row
-  const itemsWithId = items.map((item) => ({ ...item, invoice_id: invRecord.id }))
+  const itemsWithId: Row[] = items.map((item) => ({ ...item, invoice_id: invRecord.id }))
   const { error: itemsError } = await sb.from('invoice_items').insert(itemsWithId as never)
   if (itemsError) throw itemsError
+
+  // Decrement product stock for every sold item (best-effort, never below zero)
+  for (const item of itemsWithId) {
+    if (!item.product_id || !item.quantity) continue
+    try {
+      const { data: prod } = await sb
+        .from('products')
+        .select('quantity')
+        .eq('id', item.product_id)
+        .single()
+      if (!prod) continue
+      const newQty = Math.max(0, Number((prod as Row).quantity || 0) - Number(item.quantity))
+      await sb.from('products').update({ quantity: newQty } as never).eq('id', item.product_id)
+    } catch {
+      // ignore per-item stock errors so a sale is never blocked
+    }
+  }
 
   return invRecord
 }

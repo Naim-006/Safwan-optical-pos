@@ -63,7 +63,7 @@ export default function NewInvoicePage() {
   } = useForm<any>({
     resolver: zodResolver(invoiceSchema) as any,
     defaultValues: {
-      items: [{ description: '', quantity: 1, unitPrice: 0, totalPrice: 0 }],
+      items: [{ description: '', quantity: 1, unitPrice: 0, totalPrice: 0, productId: null }],
       invoiceType: 'optical',
       paymentStatus: 'paid',
       discount: 0,
@@ -110,7 +110,7 @@ export default function NewInvoicePage() {
   }, [])
 
   const addProduct = useCallback((product: typeof products[0]) => {
-    const exists = items.findIndex((i: any) => i.description === product.name)
+    const exists = items.findIndex((i: any) => i.productId === product.id)
     if (exists >= 0) {
       const updated = [...items]
       updated[exists] = {
@@ -125,6 +125,7 @@ export default function NewInvoicePage() {
         quantity: 1,
         unitPrice: product.price,
         totalPrice: product.price,
+        productId: product.id,
       })
     }
   }, [items, append, setValue])
@@ -247,6 +248,7 @@ export default function NewInvoicePage() {
           created_by: userId || '00000000-0000-0000-0000-000000000000',
         },
         items: items.map((item: any) => ({
+          product_id: item.productId || null,
           description: item.description,
           quantity: item.quantity,
           unit_price: item.unitPrice,
@@ -262,12 +264,12 @@ export default function NewInvoicePage() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('newInvoice.title')}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('newInvoice.title')}</h1>
           <p className="text-muted-foreground">{t('newInvoice.subtitle')}</p>
         </div>
-        <Button type="submit" disabled={createInvoiceMutation.isPending}>
+        <Button type="submit" className="w-full sm:w-auto" disabled={createInvoiceMutation.isPending}>
           <Save className="h-4 w-4 mr-2" /> Save Invoice
         </Button>
       </div>
@@ -379,7 +381,7 @@ export default function NewInvoicePage() {
 
             <div className="border border-violet-200 dark:border-violet-800 rounded-lg p-4 bg-violet-50/20 dark:bg-violet-950/10">
               <h3 className="font-medium text-sm mb-3 text-violet-700 dark:text-violet-400">Prescription</h3>
-              <div className="grid grid-cols-5 gap-2 mb-2">
+              <div className="grid grid-cols-5 gap-1 sm:gap-2 mb-2">
                 <div></div>
                 <Label className="text-[10px] text-center font-medium text-muted-foreground">SPH</Label>
                 <Label className="text-[10px] text-center font-medium text-muted-foreground">CYL</Label>
@@ -387,14 +389,14 @@ export default function NewInvoicePage() {
                 <Label className="text-[10px] text-center font-medium text-muted-foreground">ADD</Label>
               </div>
               <div className="space-y-2">
-                <div className="grid grid-cols-5 gap-2 items-center p-2 rounded-md bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                <div className="grid grid-cols-5 gap-1 sm:gap-2 items-center p-2 rounded-md bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
                   <Label className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">OD</Label>
                   <Input type="number" step="0.25" className="border-blue-200 dark:border-blue-800" {...register('rightSphere', { valueAsNumber: true })} />
                   <Input type="number" step="0.25" className="border-blue-200 dark:border-blue-800" {...register('rightCylinder', { valueAsNumber: true })} />
                   <Input type="number" className="border-blue-200 dark:border-blue-800" {...register('rightAxis', { valueAsNumber: true })} />
                   <Input type="number" step="0.25" className="border-blue-200 dark:border-blue-800" {...register('rightAdd', { valueAsNumber: true })} />
                 </div>
-                <div className="grid grid-cols-5 gap-2 items-center p-2 rounded-md bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                <div className="grid grid-cols-5 gap-1 sm:gap-2 items-center p-2 rounded-md bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
                   <Label className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide">OS</Label>
                   <Input type="number" step="0.25" className="border-amber-200 dark:border-amber-800" {...register('leftSphere', { valueAsNumber: true })} />
                   <Input type="number" step="0.25" className="border-amber-200 dark:border-amber-800" {...register('leftCylinder', { valueAsNumber: true })} />
@@ -421,7 +423,7 @@ export default function NewInvoicePage() {
             <CardHeader className="bg-gradient-to-b from-blue-50/80 to-transparent dark:from-blue-950/30 dark:to-transparent rounded-t-xl">
               <CardTitle className="text-lg flex items-center justify-between">
                 <span className="flex items-center gap-2">Items</span>
-                <Button type="button" variant="outline" size="sm" onClick={() => append({ description: '', quantity: 1, unitPrice: 0, totalPrice: 0 })}>
+                <Button type="button" variant="outline" size="sm" onClick={() => append({ description: '', quantity: 1, unitPrice: 0, totalPrice: 0, productId: null })}>
                   <Plus className="h-4 w-4 mr-1" /> Add
                 </Button>
               </CardTitle>
@@ -443,19 +445,19 @@ export default function NewInvoicePage() {
               </div>
               <Separator />
               {fields.map((field, index) => (
-                <div key={field.id} className="flex items-center gap-2">
+                <div key={field.id} className="flex flex-wrap items-center gap-2 rounded-lg border p-2.5 sm:border-0 sm:p-0">
                   <Input
                     placeholder="Description"
-                    className="flex-1"
+                    className="w-full sm:flex-1"
                     {...register(`items.${index}.description`)}
                     onChange={(e) => updateItem(index, 'description', e.target.value as unknown as number)}
                   />
-                  <Input type="number" className="w-16" value={items[index].quantity}
+                  <Input type="number" className="flex-1 min-w-[60px] sm:w-16 sm:flex-none" value={items[index].quantity}
                     onChange={(e) => updateItem(index, 'quantity', Number(e.target.value))} />
-                  <Input type="number" step="0.01" className="w-24" value={items[index].unitPrice}
+                  <Input type="number" step="0.01" className="flex-1 min-w-[80px] sm:w-24 sm:flex-none" value={items[index].unitPrice}
                     onChange={(e) => updateItem(index, 'unitPrice', Number(e.target.value))} />
-                  <span className="text-sm font-medium w-20 text-right">{formatCurrency(items[index].totalPrice)}</span>
-                  <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                  <span className="text-sm font-medium flex-1 text-right sm:w-20 sm:flex-none">{formatCurrency(items[index].totalPrice)}</span>
+                  <Button type="button" variant="ghost" size="icon" className="sm:ml-0" onClick={() => remove(index)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>

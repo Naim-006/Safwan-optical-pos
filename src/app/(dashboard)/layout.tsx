@@ -231,10 +231,45 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto p-4 lg:p-6">
+        <main className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
           {children}
         </main>
       </div>
+
+      {/* Mobile bottom navigation */}
+      <nav className="fixed inset-x-0 bottom-0 z-50 flex h-16 items-stretch justify-around border-t bg-card/95 backdrop-blur lg:hidden safe-bottom">
+        {[
+          { name: t('common.dashboard'), href: '/', icon: LayoutDashboard },
+          { name: t('common.pos'), href: '/pos', icon: ShoppingCart },
+          { name: t('common.invoices'), href: '/invoices', icon: FileText },
+          { name: t('common.customers'), href: '/customers', icon: Users },
+        ].map((item) => {
+          const isActive = pathname === item.href ||
+            (item.href !== '/' && pathname.startsWith(item.href))
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setSidebarOpen(false)}
+              className={cn(
+                'flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium transition-colors',
+                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <item.icon className={cn('h-5 w-5', isActive && 'scale-110')} />
+              <span className="truncate max-w-full px-1">{item.name}</span>
+            </Link>
+          )
+        })}
+        <button
+          type="button"
+          onClick={() => setSidebarOpen(true)}
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground hover:text-foreground"
+        >
+          <Menu className="h-5 w-5" />
+          <span className="truncate max-w-full px-1">{t('common.system')}</span>
+        </button>
+      </nav>
     </div>
   )
 }
