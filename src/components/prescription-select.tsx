@@ -4,6 +4,7 @@ import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import {
   sphereOptions, cylinderOptions, axisOptions, addOptions, ipdOptions,
 } from '@/lib/prescription-options'
@@ -80,6 +81,47 @@ export function PrescriptionSelect({
   const isSet = !Number.isNaN(num)
   const strVal = isSet ? num.toFixed(decimals) : null
 
+  // When the dropdown opens, scroll near the currently selected value
+  const scrollToSelected = () => {
+    if (!isSet) return
+    window.setTimeout(() => {
+      const popups = Array.from(document.querySelectorAll<HTMLElement>('[data-slot="select-content"]'))
+      const popup = popups[popups.length - 1]
+      if (!popup) return
+      const selected = popup.querySelector<HTMLElement>('[data-selected]')
+      if (!selected) return
+      const popupRect = popup.getBoundingClientRect()
+      const itemRect = selected.getBoundingClientRect()
+      const itemTop = itemRect.top - popupRect.top
+      popup.scrollTop = Math.max(0, itemTop - popup.clientHeight / 2 + itemRect.height / 2)
+    }, 60)
+  }
+
+  // IPD is a simple typing field (no dropdown)
+  if (type === 'ipd') {
+    const displayVal = value === '' || value === null || value === undefined ? '' : value
+    return (
+      <div className={className}>
+        {label && (
+          <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">
+            {label}
+          </Label>
+        )}
+        <div className={cn('relative inline-flex min-w-[124px] items-stretch overflow-hidden rounded-lg border bg-white shadow-xs dark:bg-slate-900', inputClassName)}>
+          <Input
+            type="text"
+            inputMode="decimal"
+            value={displayVal}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="60.0"
+            className="h-full w-full border-0 bg-transparent pr-9 text-right text-sm font-medium tabular-nums shadow-none focus-visible:ring-0"
+          />
+          <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">mm</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={className}>
       {label && (
@@ -88,7 +130,7 @@ export function PrescriptionSelect({
         </Label>
       )}
 
-      <Select value={strVal} onValueChange={(v) => v && onChange(v)}>
+      <Select value={strVal} onValueChange={(v) => v && onChange(v)} onOpenChange={(open) => open && scrollToSelected()}>
         <SelectTrigger className={cn('min-w-[124px] justify-center font-medium tabular-nums', inputClassName)}>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
