@@ -81,34 +81,39 @@ export function PrescriptionSelect({
   const isSet = !Number.isNaN(num)
   const strVal = isSet ? num.toFixed(decimals) : null
 
-  // When the dropdown opens, keep it at the current value, or at 0 if none selected
+  // When the dropdown opens, keep it at the current value, or at 0 if none selected.
+  // base-ui scrolls the highlighted (first) item into view after the open animation,
+  // so keep re-applying our scroll for a few seconds until it sticks.
   const scrollToSelected = () => {
-    const apply = (): boolean => {
+    let frame = 0
+    let stable = 0
+    const MAX_FRAMES = 180 // ~3s
+    const loop = () => {
+      frame += 1
       const popups = Array.from(document.querySelectorAll<HTMLElement>('[data-slot="select-content"]'))
       const popup = popups[popups.length - 1]
-      if (!popup || popup.clientHeight <= 0) return false
-      const target = popup.querySelector<HTMLElement>('[data-selected]') || popup.querySelector<HTMLElement>('[data-rx-zero]')
-      if (!target) return false
+      if (!popup || popup.clientHeight <= 0) {
+        if (frame < MAX_FRAMES) requestAnimationFrame(loop)
+        return
+      }
+      const target =
+        popup.querySelector<HTMLElement>('[data-selected]') ||
+        popup.querySelector<HTMLElement>('[data-rx-zero]')
+      if (!target) {
+        if (frame < MAX_FRAMES) requestAnimationFrame(loop)
+        return
+      }
       const popupRect = popup.getBoundingClientRect()
       const itemRect = target.getBoundingClientRect()
       const itemTop = itemRect.top - popupRect.top
-      popup.scrollTop = Math.max(0, itemTop - popup.clientHeight / 2 + itemRect.height / 2)
-      return true
+      const desired = Math.max(0, itemTop - popup.clientHeight / 2 + itemRect.height / 2)
+      popup.scrollTop = desired
+      stable = Math.abs(popup.scrollTop - desired) <= 1 ? stable + 1 : 0
+      // give base-ui's late focus-scroll (~1s) time to fire, then stop once held
+      if (frame >= 75 && stable >= 30) return
+      if (frame < MAX_FRAMES) requestAnimationFrame(loop)
     }
-    // wait for popup mount, then re-apply after the open animation so a later
-    // base-ui focus scroll cannot reset it back to the top
-    ;[120, 250, 400].forEach((ms) => window.setTimeout(apply, ms))
-    window.setTimeout(() => {
-      if (!apply()) {
-        let retries = 0
-        const retry = () => {
-          if (apply()) return
-          retries += 1
-          if (retries < 10) window.setTimeout(retry, 60)
-        }
-        retry()
-      }
-    }, 80)
+    requestAnimationFrame(loop)
   }
 
   // IPD is a simple typing field (no dropdown)
