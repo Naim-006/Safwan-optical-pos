@@ -81,20 +81,25 @@ export function PrescriptionSelect({
   const isSet = !Number.isNaN(num)
   const strVal = isSet ? num.toFixed(decimals) : null
 
-  // When the dropdown opens, scroll near the currently selected value
+  // When the dropdown opens, scroll to the current value, or to 0 if none selected
   const scrollToSelected = () => {
-    if (!isSet) return
-    window.setTimeout(() => {
+    let attempts = 0
+    const tryScroll = () => {
+      attempts += 1
       const popups = Array.from(document.querySelectorAll<HTMLElement>('[data-slot="select-content"]'))
       const popup = popups[popups.length - 1]
       if (!popup) return
-      const selected = popup.querySelector<HTMLElement>('[data-selected]')
-      if (!selected) return
-      const popupRect = popup.getBoundingClientRect()
-      const itemRect = selected.getBoundingClientRect()
-      const itemTop = itemRect.top - popupRect.top
-      popup.scrollTop = Math.max(0, itemTop - popup.clientHeight / 2 + itemRect.height / 2)
-    }, 60)
+      const target = popup.querySelector<HTMLElement>('[data-selected]') || popup.querySelector<HTMLElement>('[data-rx-zero]')
+      if (target) {
+        const popupRect = popup.getBoundingClientRect()
+        const itemRect = target.getBoundingClientRect()
+        const itemTop = itemRect.top - popupRect.top
+        popup.scrollTop = Math.max(0, itemTop - popup.clientHeight / 2 + itemRect.height / 2)
+        return
+      }
+      if (attempts < 8) window.setTimeout(tryScroll, 50)
+    }
+    window.setTimeout(tryScroll, 50)
   }
 
   // IPD is a simple typing field (no dropdown)
@@ -149,6 +154,7 @@ export function PrescriptionSelect({
                 <SelectItem
                   key={opt.value}
                   value={opt.value}
+                  data-rx-zero={parseFloat(opt.value) === 0 ? 'true' : undefined}
                   className={cn(
                     'border-b border-border/60 py-2 pl-2.5 pr-8 text-sm tabular-nums data-selected:bg-slate-200 data-selected:text-slate-900 data-selected:font-semibold dark:data-selected:bg-slate-600 dark:data-selected:text-slate-50',
                     i === group.items.length - 1 && 'border-b-0'
