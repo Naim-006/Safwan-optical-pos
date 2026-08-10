@@ -534,23 +534,23 @@ export default function CustomersPage() {
                   <div className="p-4 rounded-lg bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
                     <p className="text-sm font-bold text-blue-600 mb-3">OD (Right)</p>
                     <div className="space-y-2">
-                      <PrescriptionSelect type="sphere" value={watch('rightSphere') || ''} onChange={(v) => setValue('rightSphere', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
-                      <PrescriptionSelect type="cylinder" value={watch('rightCylinder') || ''} onChange={(v) => setValue('rightCylinder', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
-                      <PrescriptionSelect type="axis" value={watch('rightAxis') || ''} onChange={(v) => setValue('rightAxis', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
-                      <PrescriptionSelect type="add" value={watch('rightAdd') || ''} onChange={(v) => setValue('rightAdd', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
+                      <PrescriptionSelect type="sphere" value={watch('rightSphere') || ''} onChange={(v) => setValue('rightSphere', v ? Number(v) : 0)} inputClassName="h-11 text-sm border-blue-200 dark:border-blue-800" />
+                      <PrescriptionSelect type="cylinder" value={watch('rightCylinder') || ''} onChange={(v) => setValue('rightCylinder', v ? Number(v) : 0)} inputClassName="h-11 text-sm border-blue-200 dark:border-blue-800" />
+                      <PrescriptionSelect type="axis" value={watch('rightAxis') || ''} onChange={(v) => setValue('rightAxis', v ? Number(v) : 0)} inputClassName="h-11 text-sm border-blue-200 dark:border-blue-800" />
+                      <PrescriptionSelect type="add" value={watch('rightAdd') || ''} onChange={(v) => setValue('rightAdd', v ? Number(v) : 0)} inputClassName="h-11 text-sm border-blue-200 dark:border-blue-800" />
                     </div>
                   </div>
                   <div className="p-4 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
                     <p className="text-sm font-bold text-amber-600 mb-3">OS (Left)</p>
                     <div className="space-y-2">
-                      <PrescriptionSelect type="sphere" value={watch('leftSphere') || ''} onChange={(v) => setValue('leftSphere', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
-                      <PrescriptionSelect type="cylinder" value={watch('leftCylinder') || ''} onChange={(v) => setValue('leftCylinder', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
-                      <PrescriptionSelect type="axis" value={watch('leftAxis') || ''} onChange={(v) => setValue('leftAxis', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
-                      <PrescriptionSelect type="add" value={watch('leftAdd') || ''} onChange={(v) => setValue('leftAdd', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
+                      <PrescriptionSelect type="sphere" value={watch('leftSphere') || ''} onChange={(v) => setValue('leftSphere', v ? Number(v) : 0)} inputClassName="h-11 text-sm border-amber-200 dark:border-amber-800" />
+                      <PrescriptionSelect type="cylinder" value={watch('leftCylinder') || ''} onChange={(v) => setValue('leftCylinder', v ? Number(v) : 0)} inputClassName="h-11 text-sm border-amber-200 dark:border-amber-800" />
+                      <PrescriptionSelect type="axis" value={watch('leftAxis') || ''} onChange={(v) => setValue('leftAxis', v ? Number(v) : 0)} inputClassName="h-11 text-sm border-amber-200 dark:border-amber-800" />
+                      <PrescriptionSelect type="add" value={watch('leftAdd') || ''} onChange={(v) => setValue('leftAdd', v ? Number(v) : 0)} inputClassName="h-11 text-sm border-amber-200 dark:border-amber-800" />
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3"><Label className="text-sm font-medium">IPD</Label><PrescriptionSelect type="ipd" value={watch('ipd') || ''} onChange={(v) => setValue('ipd', v ? Number(v) : 0)} inputClassName="h-10 w-32 text-sm" /><span className="text-sm text-muted-foreground font-medium">mm</span></div>
+                <div className="flex items-center gap-3"><Label className="text-sm font-medium">IPD</Label><PrescriptionSelect type="ipd" value={watch('ipd') || ''} onChange={(v) => setValue('ipd', v ? Number(v) : 0)} inputClassName="h-11 w-32 text-sm" /><span className="text-sm text-muted-foreground font-medium">mm</span></div>
                 <div className="space-y-1.5"><Label className="text-xs">Notes</Label><Textarea rows={2} {...register('notes')} /></div>
               </div>
             )}

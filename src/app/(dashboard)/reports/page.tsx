@@ -487,9 +487,8 @@ export default function ReportsPage() {
           tint="bg-blue-500/10"
           iconColor="#2563eb"
           accent="bg-blue-600"
-          trendValue={trend(kpis.totalRevenue, prevKpis.totalRevenue)}
-          showTrend={showTrend}
-          sub={<span>vs prev</span>}
+          
+          
         />
         <KpiCard
           label="Collected"
@@ -498,7 +497,7 @@ export default function ReportsPage() {
           tint="bg-green-500/10"
           iconColor="#16a34a"
           accent="bg-green-600"
-          sub={<span>{kpis.collectionRate}% rate</span>}
+         
         />
         <KpiCard
           label="Outstanding"
@@ -507,7 +506,7 @@ export default function ReportsPage() {
           tint="bg-orange-500/10"
           iconColor="#ea580c"
           accent="bg-orange-500"
-          sub={<span>{kpis.invoices} invoices</span>}
+          
         />
         <KpiCard
           label="Invoices"
@@ -516,7 +515,7 @@ export default function ReportsPage() {
           tint="bg-purple-500/10"
           iconColor="#9333ea"
           accent="bg-purple-600"
-          sub={<span>{Math.round(kpis.invoices / (daily.length || 1))}/day</span>}
+        
         />
         <KpiCard
           label="Units Sold"
@@ -525,7 +524,7 @@ export default function ReportsPage() {
           tint="bg-cyan-500/10"
           iconColor="#0891b2"
           accent="bg-cyan-600"
-          sub={<span>{formatCurrency(kpis.avgOrder, currency)} avg order</span>}
+        
         />
         <KpiCard
           label="Avg Order"
@@ -534,9 +533,8 @@ export default function ReportsPage() {
           tint="bg-indigo-500/10"
           iconColor="#4f46e5"
           accent="bg-indigo-600"
-          trendValue={trend(kpis.avgOrder, prevKpis.avgOrder)}
-          showTrend={showTrend}
-          sub={<span>vs prev</span>}
+         
+          
         />
         <KpiCard
           label="Products"
@@ -545,7 +543,7 @@ export default function ReportsPage() {
           tint="bg-slate-500/10"
           iconColor="#64748b"
           accent="bg-slate-600"
-          sub={<span>in catalog</span>}
+          
         />
         <KpiCard
           label="Customers"
@@ -554,7 +552,7 @@ export default function ReportsPage() {
           tint="bg-emerald-500/10"
           iconColor="#059669"
           accent="bg-emerald-600"
-          sub={<span>registered</span>}
+          
         />
       </div>
 

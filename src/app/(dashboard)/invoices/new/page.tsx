@@ -402,22 +402,22 @@ export default function NewInvoicePage() {
               <div className="space-y-3">
                 <div className="grid grid-cols-5 gap-2 sm:gap-3 items-center p-3 rounded-md bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
                   <Label className="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">OD</Label>
-                  <PrescriptionSelect type="sphere" value={rightSphere || ''} onChange={(v) => setValue('rightSphere', v ? Number(v) : null)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
-                  <PrescriptionSelect type="cylinder" value={rightCylinder || ''} onChange={(v) => setValue('rightCylinder', v ? Number(v) : null)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
-                  <PrescriptionSelect type="axis" value={rightAxis || ''} onChange={(v) => setValue('rightAxis', v ? Number(v) : null)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
-                  <PrescriptionSelect type="add" value={rightAdd || ''} onChange={(v) => setValue('rightAdd', v ? Number(v) : null)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
+                  <PrescriptionSelect type="sphere" value={rightSphere || ''} onChange={(v) => setValue('rightSphere', v ? Number(v) : null)} inputClassName="h-11 text-sm border-blue-200 dark:border-blue-800" />
+                  <PrescriptionSelect type="cylinder" value={rightCylinder || ''} onChange={(v) => setValue('rightCylinder', v ? Number(v) : null)} inputClassName="h-11 text-sm border-blue-200 dark:border-blue-800" />
+                  <PrescriptionSelect type="axis" value={rightAxis || ''} onChange={(v) => setValue('rightAxis', v ? Number(v) : null)} inputClassName="h-11 text-sm border-blue-200 dark:border-blue-800" />
+                  <PrescriptionSelect type="add" value={rightAdd || ''} onChange={(v) => setValue('rightAdd', v ? Number(v) : null)} inputClassName="h-11 text-sm border-blue-200 dark:border-blue-800" />
                 </div>
                 <div className="grid grid-cols-5 gap-2 sm:gap-3 items-center p-3 rounded-md bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
                   <Label className="text-sm font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide">OS</Label>
-                  <PrescriptionSelect type="sphere" value={leftSphere || ''} onChange={(v) => setValue('leftSphere', v ? Number(v) : null)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
-                  <PrescriptionSelect type="cylinder" value={leftCylinder || ''} onChange={(v) => setValue('leftCylinder', v ? Number(v) : null)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
-                  <PrescriptionSelect type="axis" value={leftAxis || ''} onChange={(v) => setValue('leftAxis', v ? Number(v) : null)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
-                  <PrescriptionSelect type="add" value={leftAdd || ''} onChange={(v) => setValue('leftAdd', v ? Number(v) : null)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
+                  <PrescriptionSelect type="sphere" value={leftSphere || ''} onChange={(v) => setValue('leftSphere', v ? Number(v) : null)} inputClassName="h-11 text-sm border-amber-200 dark:border-amber-800" />
+                  <PrescriptionSelect type="cylinder" value={leftCylinder || ''} onChange={(v) => setValue('leftCylinder', v ? Number(v) : null)} inputClassName="h-11 text-sm border-amber-200 dark:border-amber-800" />
+                  <PrescriptionSelect type="axis" value={leftAxis || ''} onChange={(v) => setValue('leftAxis', v ? Number(v) : null)} inputClassName="h-11 text-sm border-amber-200 dark:border-amber-800" />
+                  <PrescriptionSelect type="add" value={leftAdd || ''} onChange={(v) => setValue('leftAdd', v ? Number(v) : null)} inputClassName="h-11 text-sm border-amber-200 dark:border-amber-800" />
                 </div>
               </div>
               <div className="mt-3 w-40">
                 <Label className="text-sm font-medium">IPD (mm)</Label>
-                <PrescriptionSelect type="ipd" value={ipd || ''} onChange={(v) => setValue('ipd', v ? Number(v) : null)} inputClassName="h-10 text-sm" />
+                <PrescriptionSelect type="ipd" value={ipd || ''} onChange={(v) => setValue('ipd', v ? Number(v) : null)} inputClassName="h-11 text-sm" />
               </div>
             </div>
 

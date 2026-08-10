@@ -609,23 +609,23 @@ export default function PosPage() {
                       <div className="space-y-3 mt-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
                         <div className="grid grid-cols-5 gap-2 items-center p-3 rounded-md bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
                           <span className="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">OD</span>
-                          <PrescriptionSelect type="sphere" value={prescription.right_sphere} onChange={(v) => updateRx('right_sphere', v)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
-                          <PrescriptionSelect type="cylinder" value={prescription.right_cylinder} onChange={(v) => updateRx('right_cylinder', v)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
-                          <PrescriptionSelect type="axis" value={prescription.right_axis} onChange={(v) => updateRx('right_axis', v)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
-                          <PrescriptionSelect type="add" value={prescription.right_add} onChange={(v) => updateRx('right_add', v)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
+                          <PrescriptionSelect type="sphere" value={prescription.right_sphere} onChange={(v) => updateRx('right_sphere', v)} inputClassName="h-11 text-sm border-blue-200 dark:border-blue-800" />
+                          <PrescriptionSelect type="cylinder" value={prescription.right_cylinder} onChange={(v) => updateRx('right_cylinder', v)} inputClassName="h-11 text-sm border-blue-200 dark:border-blue-800" />
+                          <PrescriptionSelect type="axis" value={prescription.right_axis} onChange={(v) => updateRx('right_axis', v)} inputClassName="h-11 text-sm border-blue-200 dark:border-blue-800" />
+                          <PrescriptionSelect type="add" value={prescription.right_add} onChange={(v) => updateRx('right_add', v)} inputClassName="h-11 text-sm border-blue-200 dark:border-blue-800" />
                         </div>
 
                         <div className="grid grid-cols-5 gap-2 items-center p-3 rounded-md bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
                           <span className="text-sm font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide">OS</span>
-                          <PrescriptionSelect type="sphere" value={prescription.left_sphere} onChange={(v) => updateRx('left_sphere', v)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
-                          <PrescriptionSelect type="cylinder" value={prescription.left_cylinder} onChange={(v) => updateRx('left_cylinder', v)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
-                          <PrescriptionSelect type="axis" value={prescription.left_axis} onChange={(v) => updateRx('left_axis', v)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
-                          <PrescriptionSelect type="add" value={prescription.left_add} onChange={(v) => updateRx('left_add', v)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
+                          <PrescriptionSelect type="sphere" value={prescription.left_sphere} onChange={(v) => updateRx('left_sphere', v)} inputClassName="h-11 text-sm border-amber-200 dark:border-amber-800" />
+                          <PrescriptionSelect type="cylinder" value={prescription.left_cylinder} onChange={(v) => updateRx('left_cylinder', v)} inputClassName="h-11 text-sm border-amber-200 dark:border-amber-800" />
+                          <PrescriptionSelect type="axis" value={prescription.left_axis} onChange={(v) => updateRx('left_axis', v)} inputClassName="h-11 text-sm border-amber-200 dark:border-amber-800" />
+                          <PrescriptionSelect type="add" value={prescription.left_add} onChange={(v) => updateRx('left_add', v)} inputClassName="h-11 text-sm border-amber-200 dark:border-amber-800" />
                         </div>
 
                         <div className="pt-2 border-t border-emerald-200 dark:border-emerald-800">
                           <div className="flex items-center gap-3">
-                            <PrescriptionSelect type="ipd" value={prescription.ipd} onChange={(v) => updateRx('ipd', v)} inputClassName="h-10 w-32 text-sm" />
+                            <PrescriptionSelect type="ipd" value={prescription.ipd} onChange={(v) => updateRx('ipd', v)} inputClassName="h-11 w-32 text-sm" />
                             <span className="text-sm text-muted-foreground font-medium">mm</span>
                           </div>
                         </div>
