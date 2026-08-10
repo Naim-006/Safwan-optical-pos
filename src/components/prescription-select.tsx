@@ -81,25 +81,34 @@ export function PrescriptionSelect({
   const isSet = !Number.isNaN(num)
   const strVal = isSet ? num.toFixed(decimals) : null
 
-  // When the dropdown opens, scroll to the current value, or to 0 if none selected
+  // When the dropdown opens, keep it at the current value, or at 0 if none selected
   const scrollToSelected = () => {
-    let attempts = 0
-    const tryScroll = () => {
-      attempts += 1
+    const apply = (): boolean => {
       const popups = Array.from(document.querySelectorAll<HTMLElement>('[data-slot="select-content"]'))
       const popup = popups[popups.length - 1]
-      if (!popup) return
+      if (!popup || popup.clientHeight <= 0) return false
       const target = popup.querySelector<HTMLElement>('[data-selected]') || popup.querySelector<HTMLElement>('[data-rx-zero]')
-      if (target) {
-        const popupRect = popup.getBoundingClientRect()
-        const itemRect = target.getBoundingClientRect()
-        const itemTop = itemRect.top - popupRect.top
-        popup.scrollTop = Math.max(0, itemTop - popup.clientHeight / 2 + itemRect.height / 2)
-        return
-      }
-      if (attempts < 8) window.setTimeout(tryScroll, 50)
+      if (!target) return false
+      const popupRect = popup.getBoundingClientRect()
+      const itemRect = target.getBoundingClientRect()
+      const itemTop = itemRect.top - popupRect.top
+      popup.scrollTop = Math.max(0, itemTop - popup.clientHeight / 2 + itemRect.height / 2)
+      return true
     }
-    window.setTimeout(tryScroll, 50)
+    // wait for popup mount, then re-apply after the open animation so a later
+    // base-ui focus scroll cannot reset it back to the top
+    ;[120, 250, 400].forEach((ms) => window.setTimeout(apply, ms))
+    window.setTimeout(() => {
+      if (!apply()) {
+        let retries = 0
+        const retry = () => {
+          if (apply()) return
+          retries += 1
+          if (retries < 10) window.setTimeout(retry, 60)
+        }
+        retry()
+      }
+    }, 80)
   }
 
   // IPD is a simple typing field (no dropdown)
