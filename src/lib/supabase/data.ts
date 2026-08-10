@@ -264,10 +264,28 @@ export async function fetchSalesReport(startDate: string, endDate: string) {
 export async function generateNextNumber(prefix: 'IN' | 'RE'): Promise<string> {
   const sb = getSupabase()
   if (!sb) return `${prefix}-${Date.now().toString().slice(-6)}`
-  const { count, error } = await sb.from('invoices').select('*', { count: 'exact', head: true }).like('invoice_number', `SA-${prefix}-%`)
-  if (error) return `${prefix}-${Date.now().toString().slice(-6)}`
-  const next = (count || 0) + 1
-  return `SA-${prefix}-${String(next).padStart(4, '0')}`
+
+  // Primary path: monotonic sequence (never reuses numbers, even after deletion)
+  try {
+    const { data, error } = await (sb.rpc as any)('next_sequence', { p_prefix: prefix })
+    if (!error && data != null) {
+      return `SA-${prefix}-${String(Number(data)).padStart(4, '0')}`
+    }
+  } catch {
+    // fall through to fallback below
+  }
+
+  // Fallback: continue above the highest number currently in the table
+  const { data: rows, error: err } = await sb
+    .from('invoices')
+    .select('invoice_number')
+    .like('invoice_number', `SA-${prefix}-%`)
+  if (err) return `${prefix}-${Date.now().toString().slice(-6)}`
+  const max = (rows || []).reduce((m, r) => {
+    const n = parseInt(String((r as Row).invoice_number || '').split('-').pop() || '0', 10)
+    return Number.isNaN(n) ? m : Math.max(m, n)
+  }, 0)
+  return `SA-${prefix}-${String(max + 1).padStart(4, '0')}`
 }
 
 // ─── Expenses ───

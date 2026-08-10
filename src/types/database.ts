@@ -401,7 +401,12 @@ export interface Database {
       }
     }
     Views: {}
-    Functions: {}
+    Functions: {
+      next_sequence: {
+        Args: { p_prefix: string }
+        Returns: number
+      }
+    }
     Enums: {}
   }
 }

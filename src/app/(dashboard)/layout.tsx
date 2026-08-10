@@ -24,6 +24,8 @@ import {
   Sun,
   Moon,
   Monitor,
+  Maximize,
+  Minimize,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 
@@ -56,6 +58,7 @@ export default function DashboardLayout({
   const { t, lang } = useLang()
   const { data: shop } = useShopSettings()
   const [userEmail, setUserEmail] = useState<string>('')
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const supabase = useMemo(() => {
     try { return createClient() } catch { return null }
   }, [])
@@ -65,6 +68,20 @@ export default function DashboardLayout({
       if (data?.user?.email) setUserEmail(data.user.email)
     })
   }, [supabase])
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
+  }, [])
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.().catch(() => {})
+    } else {
+      document.documentElement.requestFullscreen?.().catch(() => {})
+    }
+  }
 
   const navigation = [
     {
@@ -207,6 +224,17 @@ export default function DashboardLayout({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          {/* Fullscreen toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? 'Exit fullscreen (F11)' : 'Fullscreen (F11)'}
+          >
+            {isFullscreen ? <Minimize className="h-[1.2rem] w-[1.2rem]" /> : <Maximize className="h-[1.2rem] w-[1.2rem]" />}
+            <span className="sr-only">Toggle fullscreen</span>
+          </Button>
 
           {/* User menu */}
           <DropdownMenu>

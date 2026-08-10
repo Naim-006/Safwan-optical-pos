@@ -425,7 +425,20 @@ export default function PosPage() {
       </div>
     </body></html>`)
     win.document.close()
-    win.print()
+
+    // Wait for the logo & QR images to load before opening the print dialog,
+    // otherwise they can render blank on paper. Poll until loaded, with a cap.
+    let tries = 0
+    const attemptPrint = () => {
+      tries += 1
+      const imgs = Array.from(win.document.images || [])
+      if (tries >= 18 || imgs.every((img) => img.complete)) {
+        try { win.print() } catch { /* popup already closed */ }
+        return
+      }
+      window.setTimeout(attemptPrint, 150)
+    }
+    window.setTimeout(attemptPrint, 250)
   }
 
   // ─── Render ───
