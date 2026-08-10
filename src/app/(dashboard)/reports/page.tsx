@@ -3,10 +3,10 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import {
-  TrendingUp, DollarSign, FileText, ShoppingCart,
+  TrendingUp, DollarSign, FileText,
   CreditCard, Download, Users, Package, ArrowUp, ArrowDown, Minus,
   Wallet, Printer, FileSpreadsheet, Search, Calendar, Boxes, Layers,
-  BarChart3, Receipt, Eye, BadgePercent,
+  BarChart3, Eye, BadgePercent, GitCompareArrows, Activity,
 } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -41,7 +41,9 @@ import {
   resolveRange, computeKpis, trend, buildDaily, buildPaymentStatus, buildPaymentMethods,
   buildWeekday, buildDiscounts,
   aggregateProducts, aggregateCategories, aggregateCustomers, sortProducts, todayIso, daysAgoIso,
+  buildCompare, compareSeries,
   type SortKey, type SortDir, type ProductAgg, type CustomerAgg,
+  type ComparePoint, type SeriesCompare,
 } from './report-utils'
 import {
   exportReportPdf, printReport, exportReportExcel,
@@ -50,7 +52,6 @@ import {
 
 type RangePreset = 'today' | '30days' | 'all' | 'custom'
 type CustSortKey = 'revenue' | 'paid' | 'outstanding' | 'invoices' | 'name'
-type InvSortKey = 'date' | 'amount' | 'status'
 
 const PIE_COLORS = ['#22c55e', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316']
 const CHART_BLUE = 'hsl(217, 91%, 60%)'
@@ -122,6 +123,109 @@ function ChartEmpty({ text }: { text: string }) {
   )
 }
 
+function DeltaPill({ pct, positiveIsGood = true }: { pct: number; positiveIsGood?: boolean }) {
+  if (pct === 0) {
+    return <span className="inline-flex items-center gap-0.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground"><Minus className="h-3 w-3" />0%</span>
+  }
+  const up = pct > 0
+  const good = up === positiveIsGood
+  return (
+    <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${good ? 'bg-green-500/10 text-green-600' : 'bg-red-500/10 text-red-600'}`}>
+      {up ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+      {Math.abs(pct)}%
+    </span>
+  )
+}
+
+function MetricTrack({ m, currency, icon: Icon }: { m: ComparePoint; currency: string; icon: React.ElementType }) {
+  const fmt = (v: number) => m.kind === 'currency'
+    ? formatCurrency(v, currency)
+    : m.kind === 'percent' ? `${Math.round(v)}%` : String(Math.round(v))
+  const max = Math.max(Math.abs(m.current), Math.abs(m.previous), 1)
+  return (
+    <Card size="sm" className="relative h-full overflow-hidden">
+      <div className={`absolute inset-x-0 top-0 h-0.5 ${m.positiveIsGood ? 'bg-green-600' : 'bg-red-500'}`} />
+      <CardContent className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <p className="flex min-w-0 items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            <Icon className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{m.label}</span>
+          </p>
+          <DeltaPill pct={m.pct} positiveIsGood={m.positiveIsGood} />
+        </div>
+        <div className="flex items-baseline gap-1.5">
+          <span className="truncate text-lg font-bold leading-tight">{fmt(m.current)}</span>
+          <span className="shrink-0 text-[11px] text-muted-foreground">vs {fmt(m.previous)}</span>
+        </div>
+        <div className="space-y-1">
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+            <div className="h-full rounded-full bg-green-500" style={{ width: `${(Math.abs(m.current) / max) * 100}%` }} />
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+            <div className="h-full rounded-full bg-slate-400/70 dark:bg-slate-600" style={{ width: `${(Math.abs(m.previous) / max) * 100}%` }} />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function CompareRow({ item, currency, idx }: { item: SeriesCompare; currency: string; idx: number }) {
+  const up = item.delta > 0
+  const max = Math.max(Math.abs(item.current), Math.abs(item.previous), 1)
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between gap-2 text-xs">
+        <span className="flex min-w-0 items-center gap-1.5 font-medium">
+          <span className="text-muted-foreground">#{idx}</span>
+          <span className="truncate">{item.name}</span>
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          <span className={`font-semibold tabular-nums ${up ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(item.current, currency)}</span>
+          <span className="w-16 text-right text-muted-foreground tabular-nums">{formatCurrency(item.previous, currency)}</span>
+          <DeltaPill pct={item.pct} positiveIsGood={item.name === 'Unpaid' ? false : true} />
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+          <div className={`h-full rounded-full ${up ? 'bg-green-500' : 'bg-red-400'}`} style={{ width: `${(Math.abs(item.current) / max) * 100}%` }} />
+        </div>
+        <span className={`w-12 shrink-0 text-right text-[10px] font-bold tabular-nums ${up ? 'text-green-600' : 'text-red-600'}`}>
+          {up ? '+' : ''}{Math.round(Math.abs(item.pct))}%
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function CompareListCard({ title, items, currency, limit = 6 }: {
+  title: string
+  items: SeriesCompare[]
+  currency: string
+  limit?: number
+}) {
+  const shown = items.slice(0, limit)
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm">{title}</CardTitle>
+          <Badge variant="outline">{items.length} tracked</Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {shown.length > 0 ? (
+          <div className="space-y-4">
+            {shown.map((item, i) => <CompareRow key={item.name} item={item} currency={currency} idx={i + 1} />)}
+          </div>
+        ) : (
+          <p className="py-8 text-center text-xs text-muted-foreground">No data to compare</p>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
 export default function ReportsPage() {
   const { t } = useLang()
   const [preset, setPreset] = useState<RangePreset>('30days')
@@ -130,8 +234,6 @@ export default function ReportsPage() {
   const [prodSearch, setProdSearch] = useState('')
   const [prodSort, setProdSort] = useState<{ key: SortKey; dir: SortDir }>({ key: 'revenue', dir: 'desc' })
   const [custSort, setCustSort] = useState<{ key: CustSortKey; dir: SortDir }>({ key: 'revenue', dir: 'desc' })
-  const [invSearch, setInvSearch] = useState('')
-  const [invSort, setInvSort] = useState<InvSortKey>('date')
   const [drillProduct, setDrillProduct] = useState<ProductAgg | null>(null)
 
   const range = useMemo(() => resolveRange(preset, customFrom, customTo), [preset, customFrom, customTo])
@@ -175,6 +277,45 @@ export default function ReportsPage() {
   const allProducts = useMemo(() => aggregateProducts(currentItems, productById), [currentItems, productById])
   const categories = useMemo(() => aggregateCategories(allProducts), [allProducts])
   const customersAgg = useMemo(() => aggregateCustomers(invoices), [invoices])
+
+  // ─── Previous-period aggregations (for Comparison tab) ───
+  const prevDaily = useMemo(() => buildDaily(prevInvoicesFiltered, prevItems), [prevInvoicesFiltered, prevItems])
+  const prevProducts = useMemo(() => aggregateProducts(prevItems, productById), [prevItems, productById])
+  const prevCategories = useMemo(() => aggregateCategories(prevProducts), [prevProducts])
+  const prevPaymentMethods = useMemo(() => buildPaymentMethods(prevInvoicesFiltered), [prevInvoicesFiltered])
+  const prevPaymentStatus = useMemo(() => buildPaymentStatus(prevInvoicesFiltered), [prevInvoicesFiltered])
+  const prevDiscounts = useMemo(() => buildDiscounts(prevInvoicesFiltered), [prevInvoicesFiltered])
+
+  const metricList = useMemo(() => [
+    buildCompare('sales', 'Total Sales', kpis.totalRevenue, prevKpis.totalRevenue, 'currency'),
+    buildCompare('collected', 'Collected', kpis.collected, prevKpis.collected, 'currency'),
+    buildCompare('outstanding', 'Outstanding', kpis.outstanding, prevKpis.outstanding, 'currency', false),
+    buildCompare('invoices', 'Invoices', kpis.invoices, prevKpis.invoices, 'number'),
+    buildCompare('units', 'Units Sold', kpis.units, prevKpis.units, 'number'),
+    buildCompare('avg', 'Avg Order', kpis.avgOrder, prevKpis.avgOrder, 'currency'),
+    buildCompare('rate', 'Collection Rate', kpis.collectionRate, prevKpis.collectionRate, 'percent'),
+    buildCompare('discounts', 'Discounts Given', discounts.total, prevDiscounts.total, 'currency', false),
+  ], [kpis, prevKpis, discounts, prevDiscounts])
+
+  const compareDaily = useMemo(
+    () => daily.map((d, i) => ({ date: d.date, current: d.sales, previous: prevDaily[i]?.sales || 0 })),
+    [daily, prevDaily]
+  )
+  const categoryComp = useMemo(
+    () => compareSeries(categories.map((c) => ({ name: c.name, value: c.revenue })), prevCategories.map((c) => ({ name: c.name, value: c.revenue }))),
+    [categories, prevCategories]
+  )
+  const methodComp = useMemo(() => compareSeries(paymentMethods, prevPaymentMethods), [paymentMethods, prevPaymentMethods])
+  const statusComp = useMemo(() => compareSeries(paymentStatus, prevPaymentStatus), [paymentStatus, prevPaymentStatus])
+  const productComp = useMemo(
+    () => compareSeries(allProducts.map((p) => ({ name: p.name, value: p.revenue })), prevProducts.map((p) => ({ name: p.name, value: p.revenue }))),
+    [allProducts, prevProducts]
+  )
+
+  const METRIC_ICONS: Record<string, React.ElementType> = {
+    sales: DollarSign, collected: CreditCard, outstanding: Wallet, invoices: FileText,
+    units: Package, avg: BarChart3, rate: Activity, discounts: BadgePercent,
+  }
 
   const showTrend = preset !== 'all'
 
@@ -229,23 +370,6 @@ export default function ReportsPage() {
     return arr
   }, [customersAgg, custSort])
 
-  // ─── Invoice view ───
-  const visibleInvoices = useMemo(() => {
-    const q = invSearch.trim().toLowerCase()
-    let arr = invoices
-    if (q) {
-      arr = invoices.filter((inv: any) =>
-        inv.invoice_number?.toLowerCase().includes(q) ||
-        inv.customer_name?.toLowerCase().includes(q) ||
-        String(inv.payment_status || '').toLowerCase().includes(q)
-      )
-    }
-    if (invSort === 'amount') arr = [...arr].sort((a: any, b: any) => Number(b.total_amount || 0) - Number(a.total_amount || 0))
-    else if (invSort === 'status') arr = [...arr].sort((a: any, b: any) => String(a.payment_status || '').localeCompare(String(b.payment_status || '')))
-    else arr = [...arr].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    return arr
-  }, [invoices, invSearch, invSort])
-
   // ─── Export bundle ───
   const bundle: ReportBundle = {
     shopName: shop?.shopName || 'Safwan Opticals',
@@ -267,7 +391,6 @@ export default function ReportsPage() {
     productSort: prodSort,
     categories,
     customers: customersAgg,
-    invoices,
   }
 
   const handlePdf = async (kind: ReportKind) => {
@@ -343,9 +466,6 @@ export default function ReportsPage() {
               <DropdownMenuItem onClick={() => handlePdf('customers')}>
                 <Users className="mr-2 h-4 w-4" /> Customers Report (PDF)
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handlePdf('invoices')}>
-                <Receipt className="mr-2 h-4 w-4" /> Invoice Register (PDF)
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleExcel}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel (Full)
@@ -359,7 +479,7 @@ export default function ReportsPage() {
       </div>
 
       {/* ─── KPI Cards ─── */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard
           label="Total Sales"
           value={formatCurrency(kpis.totalRevenue, currency)}
@@ -418,50 +538,25 @@ export default function ReportsPage() {
           showTrend={showTrend}
           sub={<span>vs prev</span>}
         />
+        <KpiCard
+          label="Products"
+          value={String(products.length)}
+          icon={Boxes}
+          tint="bg-slate-500/10"
+          iconColor="#64748b"
+          accent="bg-slate-600"
+          sub={<span>in catalog</span>}
+        />
+        <KpiCard
+          label="Customers"
+          value={String(customers.length)}
+          icon={Users}
+          tint="bg-emerald-500/10"
+          iconColor="#059669"
+          accent="bg-emerald-600"
+          sub={<span>registered</span>}
+        />
       </div>
-
-      {/* ─── Period comparison strip ─── */}
-      {showTrend && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <BadgePercent className="h-4 w-4 text-blue-600" />
-              Period Comparison
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">Current period vs the previous equivalent period</p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              {[
-                { label: 'Total Sales', cur: kpis.totalRevenue, prev: prevKpis.totalRevenue, money: true },
-                { label: 'Collected', cur: kpis.collected, prev: prevKpis.collected, money: true },
-                { label: 'Invoices', cur: kpis.invoices, prev: prevKpis.invoices, money: false },
-                { label: 'Units Sold', cur: kpis.units, prev: prevKpis.units, money: false },
-              ].map((c) => {
-                const delta = trend(c.cur, c.prev)
-                const fmt = (v: number) => (c.money ? formatCurrency(v, currency) : String(Math.round(v)))
-                return (
-                  <div key={c.label} className="rounded-lg border p-3">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{c.label}</p>
-                    <p className="mt-1 truncate text-base font-bold">{fmt(c.cur)}</p>
-                    <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span>prev: {fmt(c.prev)}</span>
-                      <TrendBadge value={delta} />
-                    </div>
-                  </div>
-                )
-              })}
-              {discounts.count > 0 && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950">
-                  <p className="text-[10px] uppercase tracking-wider text-amber-700 dark:text-amber-400">Discounts Given</p>
-                  <p className="mt-1 truncate text-base font-bold text-amber-700 dark:text-amber-400">-{formatCurrency(discounts.total, currency)}</p>
-                  <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-500">{discounts.count} discounted invoices</p>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* ─── Tabs ─── */}
       <Tabs defaultValue="overview">
@@ -470,7 +565,7 @@ export default function ReportsPage() {
           <TabsTrigger value="products"><Boxes className="mr-1 h-3.5 w-3.5" /> Products</TabsTrigger>
           <TabsTrigger value="categories"><Layers className="mr-1 h-3.5 w-3.5" /> Categories</TabsTrigger>
           <TabsTrigger value="customers"><Users className="mr-1 h-3.5 w-3.5" /> Customers</TabsTrigger>
-          <TabsTrigger value="invoices"><Receipt className="mr-1 h-3.5 w-3.5" /> Invoices</TabsTrigger>
+          <TabsTrigger value="comparison"><GitCompareArrows className="mr-1 h-3.5 w-3.5" /> Comparison</TabsTrigger>
         </TabsList>
 
         {/* ═══ OVERVIEW ═══ */}
@@ -551,35 +646,6 @@ export default function ReportsPage() {
                   ) : <ChartEmpty text="No data" />}
                 </CardContent>
               </Card>
-
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm">Payment Methods</CardTitle></CardHeader>
-                <CardContent>
-                  {paymentMethods.length > 0 ? (
-                    <div className="space-y-2">
-                      {paymentMethods.map((m) => {
-                        const total = paymentMethods.reduce((s, d) => s + d.value, 0)
-                        const pct = total > 0 ? Math.round((m.value / total) * 100) : 0
-                        const color = PAYMENT_METHOD_COLORS[m.name] || PIE_COLORS[5]
-                        return (
-                          <div key={m.name} className="space-y-1">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="flex items-center gap-1.5 capitalize">
-                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-                                {m.name}
-                              </span>
-                              <span className="font-medium">{formatCurrency(m.value, currency)}</span>
-                            </div>
-                            <div className="h-1.5 rounded-full bg-muted">
-                              <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ) : <ChartEmpty text="No data" />}
-                </CardContent>
-              </Card>
             </div>
           </div>
 
@@ -622,28 +688,22 @@ export default function ReportsPage() {
             </Card>
 
             <Card>
-              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><BadgePercent className="h-4 w-4 text-amber-500" /> Discount & Collection</CardTitle></CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><BadgePercent className="h-4 w-4 text-amber-500" /> Discounts & Payments</CardTitle></CardHeader>
               <CardContent>
                 {loading ? <ChartEmpty text="Loading..." /> : (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-3">
                       <div className="rounded-lg border p-3">
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Discounts</p>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Discounts Given</p>
                         <p className="mt-1 truncate text-lg font-bold text-amber-600">-{formatCurrency(discounts.total, currency)}</p>
                       </div>
                       <div className="rounded-lg border p-3">
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Disc. Invoices</p>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Discounted Invoices</p>
                         <p className="mt-1 text-lg font-bold">{discounts.count}</p>
                       </div>
-                      <div className="rounded-lg border p-3">
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Collection Rate</p>
-                        <p className="mt-1 text-lg font-bold text-green-600">{kpis.collectionRate}%</p>
-                      </div>
-                      <div className="rounded-lg border p-3">
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Unpaid</p>
-                        <p className="mt-1 truncate text-lg font-bold text-red-600">{formatCurrency(kpis.outstanding, currency)}</p>
-                      </div>
                     </div>
+                    <Separator />
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Payment Methods</p>
                     <div className="space-y-2">
                       {paymentMethods.length > 0 ? paymentMethods.map((m) => {
                         const total = paymentMethods.reduce((s, d) => s + d.value, 0)
@@ -656,7 +716,10 @@ export default function ReportsPage() {
                                 <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
                                 {m.name}
                               </span>
-                              <span className="font-medium">{pct}%</span>
+                              <span className="flex items-center gap-2">
+                                <span className="text-muted-foreground">{pct}%</span>
+                                <span className="font-medium">{formatCurrency(m.value, currency)}</span>
+                              </span>
                             </div>
                             <div className="h-1.5 rounded-full bg-muted">
                               <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
@@ -957,99 +1020,131 @@ export default function ReportsPage() {
           </Card>
         </TabsContent>
 
-        {/* ═══ INVOICES ═══ */}
-        <TabsContent value="invoices" className="mt-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <CardTitle>Invoice Transactions</CardTitle>
-                  <Badge variant="outline">{visibleInvoices.length} invoices</Badge>
+        {/* ═══ COMPARISON (Period Tracker) ═══ */}
+        <TabsContent value="comparison" className="mt-4 space-y-4">
+          {preset === 'all' ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+                <GitCompareArrows className="h-10 w-10 text-muted-foreground opacity-30" />
+                <div>
+                  <p className="text-sm font-medium">No previous period to compare</p>
+                  <p className="text-xs text-muted-foreground">Switch to Today, Last 30 Days, or a Custom Range to see the full tracker.</p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={invSearch} onChange={(e) => setInvSearch(e.target.value)} placeholder="Search #, customer, status..." className="h-8 w-56 pl-8 text-xs" />
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Period strip */}
+              <Card>
+                <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-blue-500/10">
+                      <GitCompareArrows className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">Period Tracker</p>
+                      <p className="text-xs text-muted-foreground">Everything at a glance — products, cash, payments & progress vs previous period</p>
+                    </div>
                   </div>
-                  <Select value={invSort} onValueChange={(v) => v && setInvSort(v as InvSortKey)}>
-                    <SelectTrigger className="h-8 w-32 text-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="date">Date (newest)</SelectItem>
-                      <SelectItem value="amount">Amount (high)</SelectItem>
-                      <SelectItem value="status">Status</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  <div className="flex flex-wrap gap-3 text-xs">
+                    <div className="rounded-lg border px-3 py-2">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Current Period</p>
+                      <p className="mt-0.5 font-semibold tabular-nums">{start} — {end}</p>
+                    </div>
+                    <div className="rounded-lg border px-3 py-2">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Previous Period</p>
+                      <p className="mt-0.5 font-semibold tabular-nums">{prevStart} — {prevEnd}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Metric tracker */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {metricList.map((m) => <MetricTrack key={m.key} m={m} currency={currency} icon={METRIC_ICONS[m.key]} />)}
               </div>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <ChartEmpty text="Loading..." />
-              ) : visibleInvoices.length === 0 ? (
-                <ChartEmpty text="No invoices in this period" />
-              ) : (
-                <div className="scroll-x -mx-1 px-1">
-                  <div className="max-h-[520px] overflow-auto">
-                    <Table className="min-w-[760px]">
-                      <TableHeader className="sticky top-0 bg-background">
-                        <TableRow>
-                          <TableHead>Invoice #</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Customer</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead className="text-right">Total</TableHead>
-                          <TableHead className="text-right">Paid</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">View</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {visibleInvoices.map((inv: any) => (
-                          <TableRow key={inv.id}>
-                            <TableCell className="font-mono text-xs font-medium">{inv.invoice_number}</TableCell>
-                            <TableCell className="text-muted-foreground text-xs whitespace-nowrap">
-                              {new Date(inv.created_at).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell className="text-sm">{inv.customer_name || 'Walk-in'}</TableCell>
-                            <TableCell className="capitalize text-xs text-muted-foreground">{inv.invoice_type || 'pos'}</TableCell>
-                            <TableCell className="text-right font-medium tabular-nums">{formatCurrency(inv.total_amount, currency)}</TableCell>
-                            <TableCell className="text-right tabular-nums text-green-600">
-                              {formatCurrency(inv.payment_status === 'paid' ? inv.total_amount : inv.amount_paid, currency)}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={STATUS_BADGE[inv.payment_status] || ''}>
-                                {inv.payment_status || 'unpaid'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Link href={`/invoices/${inv.id}`} className="inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-muted">
-                                <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
-                              </Link>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+
+              {/* Dual-period revenue chart */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <CardTitle>Daily Revenue — Current vs Previous</CardTitle>
+                      <p className="text-xs text-muted-foreground">Aligned by day of period</p>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: CHART_BLUE }} /> Current</span>
+                      <span className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-slate-300 dark:bg-slate-600" /> Previous</span>
+                    </div>
                   </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                </CardHeader>
+                <CardContent>
+                  {loading ? <ChartEmpty text="Loading..." /> : compareDaily.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={280}>
+                      <AreaChart data={compareDaily}>
+                        <defs>
+                          <linearGradient id="cCur" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={CHART_BLUE} stopOpacity={0.25} />
+                            <stop offset="95%" stopColor={CHART_BLUE} stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id="cPrev" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.15} />
+                            <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="date" fontSize={11} tickLine={false} minTickGap={30} />
+                        <YAxis fontSize={11} tickLine={false} tickFormatter={(v: number) => (v >= 1000 ? `${v / 1000}k` : String(v))} />
+                        <Tooltip formatter={(value: any, name: any) => [formatCurrency(Number(value) || 0, currency), name === 'current' ? 'Current' : 'Previous']} contentStyle={tooltipStyle} />
+                        <Area type="monotone" dataKey="previous" name="previous" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 4" fill="url(#cPrev)" />
+                        <Area type="monotone" dataKey="current" name="current" stroke={CHART_BLUE} strokeWidth={2} fill="url(#cCur)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  ) : <ChartEmpty text="No data to compare" />}
+                </CardContent>
+              </Card>
+
+              {/* Categories + Payment methods */}
+              <div className="grid gap-4 lg:grid-cols-2">
+                <CompareListCard title="Category Revenue" items={categoryComp} currency={currency} />
+                <CompareListCard title="Payment Methods" items={methodComp} currency={currency} />
+              </div>
+
+              {/* Payment status + Product movers */}
+              <div className="grid gap-4 lg:grid-cols-2">
+                <Card>
+                  <CardHeader className="pb-2"><CardTitle className="text-sm">Payment Status</CardTitle></CardHeader>
+                  <CardContent>
+                    {statusComp.length > 0 ? (
+                      <div className="grid grid-cols-3 gap-3">
+                        {statusComp.map((s, i) => {
+                          const color = ['#22c55e', '#f59e0b', '#ef4444'][i] || PIE_COLORS[3]
+                          return (
+                            <div key={s.name} className="rounded-lg border p-3">
+                              <div className="flex items-center justify-between">
+                                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{s.name}</p>
+                                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+                              </div>
+                              <p className="mt-1 truncate text-lg font-bold">{formatCurrency(s.current, currency)}</p>
+                              <div className="mt-1 flex items-center justify-between gap-1">
+                                <span className="truncate text-[10px] text-muted-foreground">prev {formatCurrency(s.previous, currency)}</span>
+                                <DeltaPill pct={s.pct} positiveIsGood={s.name !== 'Unpaid'} />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ) : <p className="py-8 text-center text-xs text-muted-foreground">No payment data</p>}
+                  </CardContent>
+                </Card>
+                <CompareListCard title="Top Product Movers" items={productComp} currency={currency} limit={7} />
+              </div>
+            </>
+          )}
         </TabsContent>
       </Tabs>
 
-      {/* ─── Footer stats ─── */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <FooterStat icon={Package} tint="bg-cyan-500/10" color="#0891b2" value={String(products.length)} label="Products" />
-        <FooterStat icon={Users} tint="bg-purple-500/10" color="#9333ea" value={String(customers.length)} label="Customers" />
-        <FooterStat icon={FileText} tint="bg-blue-500/10" color="#2563eb" value={String(kpis.invoices)} label="Invoices" />
-        <FooterStat icon={CreditCard} tint="bg-green-500/10" color="#16a34a" value={`${kpis.collectionRate}%`} label="Collected" />
-        <FooterStat icon={ShoppingCart} tint="bg-orange-500/10" color="#ea580c" value={formatCurrency(kpis.avgOrder, currency)} label="Avg Order" />
-        <FooterStat icon={Wallet} tint="bg-red-500/10" color="#dc2626" value={formatCurrency(kpis.outstanding, currency)} label="Outstanding" />
-      </div>
-
-      {/* ─── Product invoice drill-down ─── */}
-      <Dialog open={!!drillProduct} onOpenChange={(open) => !open && setDrillProduct(null)}>
+      {/* ─── Product invoice drill-down ─── */}      <Dialog open={!!drillProduct} onOpenChange={(open) => !open && setDrillProduct(null)}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1109,27 +1204,5 @@ export default function ReportsPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
-}
-
-function FooterStat({
-  icon: Icon, tint, color, value, label,
-}: {
-  icon: React.ElementType
-  tint: string
-  color: string
-  value: string
-  label: string
-}) {
-  return (
-    <Card size="sm">
-      <CardContent className="flex flex-col items-center gap-1">
-        <span className={`grid h-7 w-7 place-items-center rounded-md ${tint}`}>
-          <Icon className="h-3.5 w-3.5" style={{ color }} />
-        </span>
-        <span className="truncate text-sm font-bold">{value}</span>
-        <span className="text-[10px] text-muted-foreground">{label}</span>
-      </CardContent>
-    </Card>
   )
 }

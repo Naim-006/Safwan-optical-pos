@@ -313,3 +313,58 @@ export function sortProducts(list: ProductAgg[], key: SortKey, dir: SortDir): Pr
   })
   return arr
 }
+
+// ─── Period Comparison / Tracker helpers ───
+
+export interface ComparePoint {
+  key: string
+  label: string
+  current: number
+  previous: number
+  delta: number
+  pct: number
+  kind: 'currency' | 'number' | 'percent'
+  positiveIsGood: boolean
+}
+
+export function buildCompare(
+  key: string,
+  label: string,
+  current: number,
+  previous: number,
+  kind: 'currency' | 'number' | 'percent' = 'number',
+  positiveIsGood = true
+): ComparePoint {
+  const delta = current - previous
+  const pct = previous !== 0 ? Math.round((delta / Math.abs(previous)) * 100) : current !== 0 ? 100 : 0
+  return { key, label, current, previous, delta, pct, kind, positiveIsGood }
+}
+
+export interface SeriesCompare {
+  name: string
+  current: number
+  previous: number
+  delta: number
+  pct: number
+}
+
+export function compareSeries(
+  current: { name: string; value: number }[],
+  previous: { name: string; value: number }[]
+): SeriesCompare[] {
+  const map = new Map<string, SeriesCompare>()
+  for (const c of current) {
+    map.set(c.name, { name: c.name, current: c.value, previous: 0, delta: c.value, pct: c.value !== 0 ? 100 : 0 })
+  }
+  for (const p of previous) {
+    const existing = map.get(p.name)
+    if (existing) {
+      existing.previous = p.value
+      existing.delta = existing.current - p.value
+      existing.pct = p.value !== 0 ? Math.round((existing.delta / Math.abs(p.value)) * 100) : existing.delta !== 0 ? 100 : 0
+    } else {
+      map.set(p.name, { name: p.name, current: 0, previous: p.value, delta: -p.value, pct: p.value !== 0 ? -100 : 0 })
+    }
+  }
+  return [...map.values()].sort((a, b) => b.delta - a.delta)
+}

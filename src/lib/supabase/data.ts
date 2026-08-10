@@ -302,3 +302,30 @@ export async function deleteExpense(id: string) {
   const { error } = await sb.from('expenses').delete().eq('id', id)
   if (error) throw error
 }
+
+// ─── Message logs ───
+
+export async function fetchMessageLogs(): Promise<Row[]> {
+  const sb = getSupabase()
+  if (!sb) return []
+  const { data, error } = await sb.from('message_logs').select('*').order('created_at', { ascending: false }).limit(200)
+  if (error) throw error
+  return (data as Row[]) || []
+}
+
+export async function createMessageLogs(logs: Row[]) {
+  const sb = getSupabase()
+  if (!sb) throw new Error('Supabase not configured')
+  const rows = logs.filter(Boolean)
+  if (rows.length === 0) return []
+  const { data, error } = await sb.from('message_logs').insert(rows as never).select()
+  if (error) throw error
+  return (data as Row[]) || []
+}
+
+export async function deleteMessageLog(id: string) {
+  const sb = getSupabase()
+  if (!sb) throw new Error('Supabase not configured')
+  const { error } = await sb.from('message_logs').delete().eq('id', id)
+  if (error) throw error
+}

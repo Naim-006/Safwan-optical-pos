@@ -29,6 +29,9 @@ import {
   createExpense,
   updateExpense,
   deleteExpense,
+  fetchMessageLogs,
+  createMessageLogs,
+  deleteMessageLog,
 } from '@/lib/supabase/data'
 
 // ─── Products ───
@@ -337,6 +340,38 @@ export function useDeleteExpense() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['expenses'] })
       toast.success('Expense deleted')
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+// ─── Message logs ───
+
+export function useMessageLogs() {
+  return useQuery({
+    queryKey: ['message_logs'],
+    queryFn: fetchMessageLogs,
+  }) as unknown as { data: Record<string, any>[]; isLoading: boolean }
+}
+
+export function useCreateMessageLogs() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: createMessageLogs,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['message_logs'] })
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+}
+
+export function useDeleteMessageLog() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: deleteMessageLog,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['message_logs'] })
+      toast.success('History entry removed')
     },
     onError: (err: Error) => toast.error(err.message),
   })
