@@ -8,6 +8,7 @@ interface PosStore {
   addToCart: (product: Record<string, any>, quantity?: number) => void
   removeFromCart: (productId: string) => void
   updateQuantity: (productId: string, quantity: number) => void
+  updatePrice: (productId: string, price: number) => void
   setDiscount: (discount: number) => void
   clearCart: () => void
   getCartTotal: () => number
@@ -52,6 +53,15 @@ export const usePosStore = create<PosStore>((set, get) => ({
     }))
   },
 
+  updatePrice: (productId, price) => {
+    if (price < 0) return
+    set((state) => ({
+      cart: state.cart.map((item) =>
+        item.id === productId ? { ...item, price } : item
+      ),
+    }))
+  },
+
   setDiscount: (discount) => set({ discount }),
 
   clearCart: () => set({ cart: [], discount: 0 }),
@@ -59,7 +69,7 @@ export const usePosStore = create<PosStore>((set, get) => ({
   getCartTotal: () => {
     const { cart, discount } = get()
     const subtotal = cart.reduce(
-      (sum, item) => sum + item.price * item.cartQuantity,
+      (sum, item) => sum + (item.price || 0) * item.cartQuantity,
       0
     )
     return subtotal - discount

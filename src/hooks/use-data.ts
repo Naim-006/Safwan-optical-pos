@@ -23,6 +23,8 @@ import {
   fetchSettings,
   saveSettings,
   fetchSalesReport,
+  fetchInvoicesByDateRange,
+  fetchInvoiceItemsInRange,
   fetchExpenses,
   createExpense,
   updateExpense,
@@ -276,6 +278,22 @@ export function useSalesReport(startDate: string, endDate: string) {
     queryFn: () => fetchSalesReport(startDate, endDate),
     enabled: !!startDate && !!endDate,
   })
+}
+
+export function useInvoicesByDateRange(startDate: string, endDate: string) {
+  return useQuery({
+    queryKey: ['reports', 'invoices', startDate, endDate],
+    queryFn: () => fetchInvoicesByDateRange(startDate, endDate),
+    enabled: !!startDate && !!endDate,
+  }) as unknown as { data: Record<string, any>[]; isLoading: boolean }
+}
+
+export function useProductSales(startDate: string, endDate: string) {
+  return useQuery({
+    queryKey: ['reports', 'items', startDate, endDate],
+    queryFn: () => fetchInvoiceItemsInRange(startDate, endDate),
+    enabled: !!startDate && !!endDate,
+  }) as unknown as { data: Record<string, any>[]; isLoading: boolean }
 }
 
 // ─── Expenses ───

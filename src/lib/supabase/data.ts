@@ -205,6 +205,36 @@ export async function saveSettings(settings: Row) {
   return data
 }
 
+export async function fetchInvoicesByDateRange(startDate: string, endDate: string): Promise<Row[]> {
+  const sb = getSupabase()
+  if (!sb) return []
+  const { data, error } = await sb
+    .from('invoices')
+    .select('*')
+    .gte('created_at', startDate)
+    .lte('created_at', endDate + 'T23:59:59')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return (data as Row[]) || []
+}
+
+export async function fetchInvoiceItemsInRange(startDate: string, endDate: string): Promise<Row[]> {
+  const sb = getSupabase()
+  if (!sb) return []
+  const { data, error } = await sb
+    .from('invoice_items')
+    .select(
+      'id, invoice_id, product_id, description, quantity, unit_price, total_price, ' +
+      'invoices!inner(id, invoice_number, created_at, invoice_type, customer_name, payment_status)'
+    )
+    .gte('invoices.created_at', startDate)
+    .lte('invoices.created_at', endDate + 'T23:59:59')
+    .neq('invoices.invoice_type', 'receipt')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return (data as Row[]) || []
+}
+
 export async function fetchSalesReport(startDate: string, endDate: string) {
   const sb = getSupabase()
   if (!sb) return { totalSales: 0, totalInvoices: 0, averageOrder: 0, paidAmount: 0, unpaidAmount: 0 }

@@ -19,6 +19,7 @@ import { Separator } from '@/components/ui/separator'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
+import { PrescriptionSelect } from '@/components/prescription-select'
 import { usePosStore } from '@/stores'
 import {
   useProducts, useSearchProducts, useCreateInvoice,
@@ -54,7 +55,7 @@ export default function PosPage() {
   const { t } = useLang()
   const { data: shop } = useShopSettings()
   const {
-    cart, addToCart, removeFromCart, updateQuantity,
+    cart, addToCart, removeFromCart, updateQuantity, updatePrice,
     discount, setDiscount, clearCart, getCartTotal, getItemCount,
   } = usePosStore()
 
@@ -136,7 +137,7 @@ export default function PosPage() {
     barcodeRef.current?.focus()
   }
 
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.cartQuantity, 0)
+  const subtotal = cart.reduce((sum, item) => sum + (item.price || 0) * item.cartQuantity, 0)
   const total = subtotal - discount
   const balanceDue = paymentStatus === 'paid' ? 0 : paymentStatus === 'partial' ? Math.max(0, total - amountPaid) : total
 
@@ -283,8 +284,8 @@ export default function PosPage() {
           product_id: item.id || null,
           description: item.name,
           quantity: item.cartQuantity,
-          unit_price: item.price,
-          total_price: item.price * item.cartQuantity,
+          unit_price: item.price || 0,
+          total_price: (item.price || 0) * item.cartQuantity,
         })),
       }
 
@@ -371,7 +372,7 @@ export default function PosPage() {
             <tr>
               <td>${item.name}</td>
               <td style="text-align:center">${item.cartQuantity}</td>
-              <td style="text-align:right">${formatCurrency(item.price * item.cartQuantity)}</td>
+              <td style="text-align:right">${formatCurrency((item.price || 0) * item.cartQuantity)}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -410,32 +411,21 @@ export default function PosPage() {
             <td>${prescription.left_sphere || 0}</td><td>${prescription.left_cylinder || 0}</td>
             <td>${prescription.left_axis || 0}</td><td>${prescription.left_add || 0}</td>
           </tr>
-          ${prescription.ipd && prescription.ipd !== '' ? `
-          <tr><td class="eye-label" colspan="2">IPD</td><td colspan="3">${prescription.ipd}mm</td></tr>` : ''}
         </tbody>
       </table>
       <div class="divider"></div>` : ''}
 
-      <div class="qrcode" id="pos-qr"></div>
+      <div class="qrcode">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrUrl)}" alt="QR Code" />
+      </div>
 
       <div class="footer">
-        <p>Thank you for shopping with us!</p>
-        <p dir="rtl">شكراً لتسوقك معنا!</p>
+        <p>Scan QR to view invoice details</p>
+        <p>Thank you for your business!</p>
       </div>
-      <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-      <script>
-        setTimeout(function() {
-          new QRCode(document.getElementById('pos-qr'), {
-            text: '${qrUrl}',
-            width: 100, height: 100,
-            colorDark: '#000', colorLight: '#fff',
-            correctLevel: QRCode.CorrectLevel.M
-          });
-          setTimeout(function() { window.print(); setTimeout(function() { window.close(); }, 500); }, 300);
-        }, 200);
-      </script>
     </body></html>`)
     win.document.close()
+    win.print()
   }
 
   // ─── Render ───
@@ -447,7 +437,7 @@ export default function PosPage() {
 
       <div className="grid gap-4 lg:gap-6 lg:grid-cols-3">
         {/* LEFT: Products */}
-        <div className="lg:col-span-2 space-y-4 order-2 lg:order-1">
+        <div className="lg:col-span-1 space-y-4 order-2 lg:order-1">
           <Card className="border-t-2 border-t-blue-500 shadow-sm">
             <CardHeader className="pb-3 bg-gradient-to-b from-blue-50/80 to-transparent dark:from-blue-950/30 dark:to-transparent rounded-t-xl">
               <div className="flex flex-col sm:flex-row gap-2">
@@ -514,7 +504,7 @@ export default function PosPage() {
         </div>
 
         {/* RIGHT: Cart + Customer + Payment */}
-        <div className="flex flex-col gap-4 order-1 lg:order-2">
+        <div className="lg:col-span-2 flex flex-col gap-4 order-1 lg:order-2">
           {/* ─── CUSTOMER SEARCH & PRESCRIPTION ─── */}
           <Card className="overflow-visible border-t-2 border-t-emerald-500 shadow-sm order-2 xl:order-none scroll-mt-20">
             <CardHeader className="pb-2 bg-gradient-to-b from-emerald-50/80 to-transparent dark:from-emerald-950/30 dark:to-transparent rounded-t-xl">
@@ -598,112 +588,52 @@ export default function PosPage() {
                           />
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-red-50 hover:text-red-500" onClick={clearCustomer}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={clearCustomer}>
                         <X className="h-3.5 w-3.5" />
                       </Button>
                     </div>
+
+                    {/* Prescription Toggle */}
+                    <Button
+                      variant="outline"
+                      size="default"
+                      className="w-full text-sm h-10 font-medium"
+                      onClick={() => setShowPrescription(!showPrescription)}
+                    >
+                      {showPrescription ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
+                      {showPrescription ? 'Hide' : 'Show'} Prescription
+                    </Button>
+
+                    {/* Prescription Form */}
+                    {showPrescription && (
+                      <div className="space-y-3 mt-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+                        <div className="grid grid-cols-5 gap-2 items-center p-3 rounded-md bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                          <span className="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">OD</span>
+                          <PrescriptionSelect type="sphere" value={prescription.right_sphere} onChange={(v) => updateRx('right_sphere', v)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
+                          <PrescriptionSelect type="cylinder" value={prescription.right_cylinder} onChange={(v) => updateRx('right_cylinder', v)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
+                          <PrescriptionSelect type="axis" value={prescription.right_axis} onChange={(v) => updateRx('right_axis', v)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
+                          <PrescriptionSelect type="add" value={prescription.right_add} onChange={(v) => updateRx('right_add', v)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
+                        </div>
+
+                        <div className="grid grid-cols-5 gap-2 items-center p-3 rounded-md bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                          <span className="text-sm font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide">OS</span>
+                          <PrescriptionSelect type="sphere" value={prescription.left_sphere} onChange={(v) => updateRx('left_sphere', v)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
+                          <PrescriptionSelect type="cylinder" value={prescription.left_cylinder} onChange={(v) => updateRx('left_cylinder', v)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
+                          <PrescriptionSelect type="axis" value={prescription.left_axis} onChange={(v) => updateRx('left_axis', v)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
+                          <PrescriptionSelect type="add" value={prescription.left_add} onChange={(v) => updateRx('left_add', v)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
+                        </div>
+
+                        <div className="pt-2 border-t border-emerald-200 dark:border-emerald-800">
+                          <div className="flex items-center gap-3">
+                            <PrescriptionSelect type="ipd" value={prescription.ipd} onChange={(v) => updateRx('ipd', v)} inputClassName="h-10 w-32 text-sm" />
+                            <span className="text-sm text-muted-foreground font-medium">mm</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-
-              {/* Prescription toggle */}
-              {customerName && (
-                <button
-                  type="button"
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                    showPrescription
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                      : 'bg-muted/60 text-muted-foreground hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-950/20'
-                  }`}
-                  onClick={() => setShowPrescription(!showPrescription)}
-                >
-                  <span className="flex items-center gap-1.5">
-                    <Eye className="h-3.5 w-3.5" /> Prescription & Measurements
-                  </span>
-                  {showPrescription ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                </button>
-              )}
-
-              {/* Prescription form */}
-              {showPrescription && (
-                <div className="border border-emerald-200 dark:border-emerald-800 rounded-lg p-3 space-y-3 bg-emerald-50/30 dark:bg-emerald-950/10">
-                  {/* Eye type / Lens type */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-0.5">
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Eye Type</span>
-                      <Select value={prescription.eye_type || undefined} onValueChange={(v) => v && setPrescription((prev) => ({ ...prev, eye_type: v }))}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Single Vision">Single Vision</SelectItem>
-                          <SelectItem value="Bifocal">Bifocal</SelectItem>
-                          <SelectItem value="Progressive">Progressive</SelectItem>
-                          <SelectItem value="Office Lens">Office Lens</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-0.5">
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Lens Type</span>
-                      <Select value={prescription.lens_type || undefined} onValueChange={(v) => v && setPrescription((prev) => ({ ...prev, lens_type: v }))}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="CR-39">CR-39</SelectItem>
-                          <SelectItem value="Polycarbonate">Polycarbonate</SelectItem>
-                          <SelectItem value="BlueCut">BlueCut</SelectItem>
-                          <SelectItem value="Photochromic">Photochromic</SelectItem>
-                          <SelectItem value="Hi-Index">Hi-Index</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Prescription grid */}
-                  <div className="space-y-0.5">
-                    <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Rx Values</span>
-                  </div>
-                  <div className="grid grid-cols-5 gap-1 text-[10px] font-medium text-muted-foreground">
-                    <span></span>
-                    <span className="text-center">SPH</span>
-                    <span className="text-center">CYL</span>
-                    <span className="text-center">AXIS</span>
-                    <span className="text-center">ADD</span>
-                  </div>
-
-                  <div className="grid grid-cols-5 gap-1 items-center p-1.5 rounded-md bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-                    <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">OD</span>
-                    <Input className="h-7 text-xs border-blue-200 dark:border-blue-800" placeholder="0" type="number" step="0.25"
-                      value={prescription.right_sphere} onChange={(e) => updateRx('right_sphere', e.target.value)} />
-                    <Input className="h-7 text-xs border-blue-200 dark:border-blue-800" placeholder="0" type="number" step="0.25"
-                      value={prescription.right_cylinder} onChange={(e) => updateRx('right_cylinder', e.target.value)} />
-                    <Input className="h-7 text-xs border-blue-200 dark:border-blue-800" placeholder="0" type="number"
-                      value={prescription.right_axis} onChange={(e) => updateRx('right_axis', e.target.value)} />
-                    <Input className="h-7 text-xs border-blue-200 dark:border-blue-800" placeholder="0" type="number" step="0.25"
-                      value={prescription.right_add} onChange={(e) => updateRx('right_add', e.target.value)} />
-                  </div>
-
-                  <div className="grid grid-cols-5 gap-1 items-center p-1.5 rounded-md bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-                    <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wide">OS</span>
-                    <Input className="h-7 text-xs border-amber-200 dark:border-amber-800" placeholder="0" type="number" step="0.25"
-                      value={prescription.left_sphere} onChange={(e) => updateRx('left_sphere', e.target.value)} />
-                    <Input className="h-7 text-xs border-amber-200 dark:border-amber-800" placeholder="0" type="number" step="0.25"
-                      value={prescription.left_cylinder} onChange={(e) => updateRx('left_cylinder', e.target.value)} />
-                    <Input className="h-7 text-xs border-amber-200 dark:border-amber-800" placeholder="0" type="number"
-                      value={prescription.left_axis} onChange={(e) => updateRx('left_axis', e.target.value)} />
-                    <Input className="h-7 text-xs border-amber-200 dark:border-amber-800" placeholder="0" type="number" step="0.25"
-                      value={prescription.left_add} onChange={(e) => updateRx('left_add', e.target.value)} />
-                  </div>
-
-                  <div className="pt-1 border-t border-emerald-200 dark:border-emerald-800">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] text-muted-foreground uppercase tracking-wider">IPD</span>
-                      <Input className="h-8 w-20 text-xs" placeholder="mm" type="number" step="0.5"
-                        value={prescription.ipd} onChange={(e) => updateRx('ipd', e.target.value)} />
-                      <span className="text-[10px] text-muted-foreground">mm</span>
-                    </div>
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -736,9 +666,14 @@ export default function PosPage() {
                           </Button>
                         </div>
                       </div>
-                      <div className="text-right ml-2">
-                        <p className="font-bold text-sm">{formatCurrency(item.price * item.cartQuantity)}</p>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 touch-manipulation"
+                      <div className="text-right ml-2 flex flex-col items-end gap-1">
+                        <Input
+                          type="number"
+                          className="w-24 h-7 text-right text-sm"
+                          value={item.price || ''}
+                          onChange={(e) => updatePrice(item.id, Number(e.target.value) || 0)}
+                        />
+                        <Button variant="ghost" size="icon" className="h-6 w-6 touch-manipulation"
                           onClick={() => removeFromCart(item.id)}>
                           <Trash2 className="h-3.5 w-3.5 text-destructive" />
                         </Button>

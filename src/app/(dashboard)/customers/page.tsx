@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { PrescriptionSelect } from '@/components/prescription-select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
@@ -529,17 +530,27 @@ export default function CustomersPage() {
                     </Select>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-2.5 rounded-lg bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
-                    <p className="text-xs font-bold text-blue-600 mb-1.5">OD (Right)</p>
-                    {['SPH','CYL','AXIS','ADD'].map((f, i) => <div key={f} className="flex items-center gap-2 mb-1"><Label className="text-[10px] w-8">{f}</Label><Input className="h-7 text-xs border-blue-200 dark:border-blue-800" type="number" step={f==='AXIS'?1:0.25} {...register(['rightSphere','rightCylinder','rightAxis','rightAdd'][i] as any, { valueAsNumber: true })} /></div>)}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-lg bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm font-bold text-blue-600 mb-3">OD (Right)</p>
+                    <div className="space-y-2">
+                      <PrescriptionSelect type="sphere" value={getValues('rightSphere') || ''} onChange={(v) => setValue('rightSphere', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
+                      <PrescriptionSelect type="cylinder" value={getValues('rightCylinder') || ''} onChange={(v) => setValue('rightCylinder', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
+                      <PrescriptionSelect type="axis" value={getValues('rightAxis') || ''} onChange={(v) => setValue('rightAxis', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
+                      <PrescriptionSelect type="add" value={getValues('rightAdd') || ''} onChange={(v) => setValue('rightAdd', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-blue-200 dark:border-blue-800" />
+                    </div>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
-                    <p className="text-xs font-bold text-amber-600 mb-1.5">OS (Left)</p>
-                    {['SPH','CYL','AXIS','ADD'].map((f, i) => <div key={f} className="flex items-center gap-2 mb-1"><Label className="text-[10px] w-8">{f}</Label><Input className="h-7 text-xs border-amber-200 dark:border-amber-800" type="number" step={f==='AXIS'?1:0.25} {...register(['leftSphere','leftCylinder','leftAxis','leftAdd'][i] as any, { valueAsNumber: true })} /></div>)}
+                  <div className="p-4 rounded-lg bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                    <p className="text-sm font-bold text-amber-600 mb-3">OS (Left)</p>
+                    <div className="space-y-2">
+                      <PrescriptionSelect type="sphere" value={getValues('leftSphere') || ''} onChange={(v) => setValue('leftSphere', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
+                      <PrescriptionSelect type="cylinder" value={getValues('leftCylinder') || ''} onChange={(v) => setValue('leftCylinder', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
+                      <PrescriptionSelect type="axis" value={getValues('leftAxis') || ''} onChange={(v) => setValue('leftAxis', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
+                      <PrescriptionSelect type="add" value={getValues('leftAdd') || ''} onChange={(v) => setValue('leftAdd', v ? Number(v) : 0)} inputClassName="h-10 text-sm border-amber-200 dark:border-amber-800" />
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2"><Label className="text-xs">IPD</Label><Input className="h-8 w-20 text-xs" type="number" step="0.5" {...register('ipd', { valueAsNumber: true })} /><span className="text-xs text-muted-foreground">mm</span></div>
+                <div className="flex items-center gap-3"><Label className="text-sm font-medium">IPD</Label><PrescriptionSelect type="ipd" value={getValues('ipd') || ''} onChange={(v) => setValue('ipd', v ? Number(v) : 0)} inputClassName="h-10 w-32 text-sm" /><span className="text-sm text-muted-foreground font-medium">mm</span></div>
                 <div className="space-y-1.5"><Label className="text-xs">Notes</Label><Textarea rows={2} {...register('notes')} /></div>
               </div>
             )}
